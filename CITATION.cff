@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "AZR-inspired Energy Forecasting & Anomaly Detection"
+abstract: "A production-grade machine learning system that adapts the propose→solve→verify self-play paradigm from Alpha Zero Research to time series forecasting and anomaly detection in energy consumption data. Features household-level prediction with distribution network validation using UK-DALE, London Smart Meters, and SSEN LV feeder data."
+authors:
+  - family-names: "Your Last Name"
+    given-names: "Your First Name"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+    email: "your.email@example.com"
+    affiliation: "Your University"
+repository-code: "https://github.com/USERNAME/FYP-Predictive_Anomaly_Detection"
+url: "https://github.com/USERNAME/FYP-Predictive_Anomaly_Detection"
+license: MIT
+keywords:
+  - "energy forecasting"
+  - "anomaly detection"
+  - "time series"
+  - "self-play learning"
+  - "machine learning"
+  - "smart grids"
+  - "distribution networks"
+  - "household energy"
+  - "neural networks"
+  - "reinforcement learning"
+version: "0.1.0"
+date-released: "2025-09-23"
+preferred-citation:
+  type: thesis
+  title: "AZR-inspired Energy Forecasting & Anomaly Detection: A Self-Play Approach to Household Consumption Prediction with Distribution Network Validation"
+  authors:
+    - family-names: "Your Last Name"
+      given-names: "Your First Name"
+      orcid: "https://orcid.org/0000-0000-0000-0000"
+  institution:
+    name: "Your University"
+  department: "Department of Computer Science"
+  thesis-type: "Final Year Project"
+  year: 2025
+  url: "https://github.com/USERNAME/FYP-Predictive_Anomaly_Detection"
