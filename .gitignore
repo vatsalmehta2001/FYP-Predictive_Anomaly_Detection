@@ -213,17 +213,30 @@ $RECYCLE.BIN/
 .Trash-*
 .nfs*
 
-# Data directories (DVC tracked, not git tracked)
-/data/raw/
-/data/processed/
-/data/derived/
+# ignore big data
+data/**
+data/raw/**
+data/processed/**
+data/derived/**
+
+# but DO track DVC metadata and tiny samples
+!data/
+!data/raw/
+!data/processed/
+!data/derived/
+!data/raw/*.dvc
+!data/processed/*.dvc
+!data/derived/*.dvc
+!data/**/*.dvc
+!data/.gitignore
+!data/samples/**
+!dvc.lock
 
 # MLflow tracking
 mlruns/
 mlartifacts/
 
-# DVC files
-/dvc.lock
+
 
 # Temporary files and caches
 *.log

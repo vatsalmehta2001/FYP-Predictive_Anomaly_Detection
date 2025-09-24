@@ -1,0 +1,6 @@
+outs:
+- md5: e9af3d9ba558b4c348ca0da417987ae1.dir
+  size: 9344493197
+  nfiles: 4
+  hash: md5
+  path: lcl
