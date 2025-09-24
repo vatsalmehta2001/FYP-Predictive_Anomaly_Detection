@@ -229,6 +229,8 @@ data/derived/**
 !data/derived/*.dvc
 !data/**/*.dvc
 !data/.gitignore
+!data/README_raw.md
+!data/samples/
 !data/samples/**
 !dvc.lock
 

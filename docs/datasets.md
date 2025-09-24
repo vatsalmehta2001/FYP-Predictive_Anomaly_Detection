@@ -21,10 +21,11 @@ UK-DALE is a comprehensive dataset containing electricity consumption measuremen
 - **Anomaly Detection**: Training models to identify unusual consumption patterns
 
 ### Data Processing Notes
-- Will be aggregated to 30-minute resolution for consistency across datasets
-- Missing data periods will be identified and handled appropriately
-- Seasonal and holiday patterns will be extracted for model features
-- Appliance-level data will be used for explainability analysis
+- **Native Format**: CSV files with half-hourly consumption data
+- **Ingestion**: Converted to unified Parquet schema with UTC timestamps
+- **Resolution**: Native 30-minute intervals preserved
+- **Metadata**: Acorn demographic groups stored in extras field
+- **Quality**: Missing data periods logged, invalid readings skipped
 
 ---
 
@@ -48,10 +49,11 @@ The Low Carbon London (LCL) dataset contains smart meter electricity consumption
 - **Cross-Dataset Validation**: Comparing patterns with UK-DALE for model generalization
 
 ### Data Processing Notes
-- Already at target 30-minute resolution
-- Comprehensive coverage allows for robust train/validation/test splits
-- Weather data will be aligned for enhanced forecasting models
-- Household clustering will identify representative consumption archetypes
+- **Native Format**: HDF5 hierarchical structure with high-resolution power data
+- **Ingestion**: Dual output - native resolution and 30-minute downsampled
+- **Resolution**: 1-6 second native, optional 30-minute aggregation
+- **Metadata**: Appliance types and meter IDs preserved in extras
+- **Entity Mapping**: Separate entity IDs for aggregate and appliance-level data
 
 ---
 
@@ -75,10 +77,11 @@ Scottish and Southern Electricity Networks (SSEN) Low Voltage (LV) feeder data p
 - **Constraint Verification**: Informing verifier reward functions with realistic network limits
 
 ### Data Processing Notes
-- **Access Restrictions**: Used only for validation purposes, not for training
-- **Privacy Preservation**: All comparisons will be statistical/distributional, no reverse engineering
-- **Temporal Alignment**: Matched with household data periods where possible
-- **Aggregation Level**: Focus on feeder-level patterns, not individual customer identification
+- **Native Format**: CSV lookup + CKAN API for time series data
+- **Ingestion**: API client with rate limiting and pagination support
+- **Resolution**: 30-minute feeder aggregates
+- **Metadata**: Feeder names, locations, capacities from lookup joined to time series
+- **Access Mode**: Public API (no auth required) or mock data fallback for testing
 
 ---
 
@@ -128,3 +131,29 @@ data/raw/
 
 ### Remote Storage Configuration
 Future remote storage (S3/Azure) will be configured following the guidelines in [Data Governance](data_governance.md).
+
+## Synthetic Sample Datasets
+
+For development, testing, and CI purposes, this project includes tiny synthetic sample datasets that replicate the structure and basic patterns of the real datasets without requiring large downloads.
+
+### Sample Files Location
+```
+data/samples/
+├── lcl_sample.csv      # London Smart Meters sample (48 rows, ~2KB)
+├── ukdale_sample.csv   # UK-DALE sample (48 rows, ~2KB) 
+└── ssen_sample.csv     # SSEN feeder sample (48 rows, ~2KB)
+```
+
+### Sample Characteristics
+- **Temporal Coverage**: 24 hours (2023-01-01) at 30-minute resolution
+- **Pattern**: Realistic daily seasonality with morning and evening peaks
+- **Size**: <60KB total for all three files
+- **Purpose**: CI testing, development setup, algorithm prototyping
+
+### Usage Notes
+- **For CI/Testing**: Use `data/samples/` to verify data loading and processing logic
+- **For Development**: Switch to real datasets in `data/raw/` for actual model training
+- **For Demos**: Samples provide quick visualization and pipeline validation
+- **For Experiments**: Real datasets required for meaningful research results
+
+**⚠️ Important:** These synthetic samples are **not suitable for research or publication**. They are purely for development convenience and CI automation. All experimental work should use the complete real datasets described above.

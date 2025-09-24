@@ -1,0 +1,9 @@
+# DVC pipeline parameters
+
+# Ingestion parameters
+use_samples: true
+downsample_30min: true
+
+# API configuration
+ssen_ckan_url: "https://data.ssen.co.uk"
+ssen_package_id: "low-voltage-feeder-data"

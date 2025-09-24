@@ -1,6 +1,6 @@
 # AZR-inspired Energy Forecasting & Anomaly Detection
 
-[![CI](https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/workflows/CI/badge.svg)](https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/actions)
+[![CI](https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/actions/workflows/ci.yml/badge.svg)](https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
@@ -84,14 +84,90 @@ poetry shell
 # Install pre-commit hooks
 pre-commit install
 
-# Initialize DVC (if not already done)
-dvc init
+# Pull data if remote configured (optional)
+# dvc pull
 
 # Run smoke tests
 pytest tests/
 
 # Verify pipeline (placeholder stages)
 dvc repro
+```
+
+### 📊 Data Onboarding
+
+This project uses **DVC (Data Version Control)** to manage large datasets while keeping Git repositories lightweight.
+
+#### For Quick Testing/CI
+```bash
+# Use built-in synthetic samples (already available)
+ls data/samples/
+# → lcl_sample.csv, ukdale_sample.csv, ssen_sample.csv
+```
+
+#### For Full Development
+```bash
+# 1. Download datasets (see docs/download_links.md for sources)
+#    Place in: data/raw/ukdale/, data/raw/lcl/, data/raw/ssen/
+
+# 2. Track with DVC
+dvc add data/raw/ukdale
+dvc add data/raw/lcl  
+dvc add data/raw/ssen
+
+# 3. Commit pointers (not data!) to Git
+git add data/raw/*.dvc dvc.lock
+git commit -m "DVC: track raw datasets via pointers"
+
+# 4. Optional: Set up remote storage for team sharing
+dvc remote add -d myremote s3://my-bucket/fyp-data/
+dvc push
+```
+
+**📋 Dataset Locations:**
+- `data/raw/ukdale/` → UK-DALE household consumption (~6.3GB)
+- `data/raw/lcl/` → London Smart Meters data (~8.5GB)  
+- `data/raw/ssen/` → SSEN distribution feeder data (~35MB)
+- `data/samples/` → Tiny synthetic samples for demos/CI (<60KB)
+
+**🔗 Resources:**
+- [Dataset download links & setup](docs/download_links.md)
+- [Complete DVC workflow guide](data/README_raw.md)
+- [Ingestion specifications](docs/ingestion_specs.md)
+- [Baseline models documentation](docs/baselines.md)
+
+#### Data Ingestion
+
+```bash
+# Quick test with samples (no downloads needed)
+python -m fyp.ingestion.cli lcl --use-samples
+python -m fyp.ingestion.cli ukdale --use-samples
+python -m fyp.ingestion.cli ssen --use-samples
+
+# Full ingestion (requires raw data)
+python -m fyp.ingestion.cli lcl
+python -m fyp.ingestion.cli ukdale --downsample-30min
+python -m fyp.ingestion.cli ssen  # Uses CKAN API
+```
+
+#### Baseline Models
+
+```bash
+# Quick forecasting baselines on samples
+python -m fyp.runner forecast --dataset lcl --use-samples
+
+# Anomaly detection baselines
+python -m fyp.runner anomaly --dataset ukdale --use-samples
+
+# Full evaluation with custom horizon
+python -m fyp.runner forecast --dataset ssen --horizon 96
+
+# Modern neural models with uncertainty quantification
+python -m fyp.runner forecast --dataset lcl --model-type patchtst --use-samples
+python -m fyp.runner anomaly --dataset ukdale --model-type autoencoder --use-samples
+
+# Note: Use canonical import path fyp.anomaly.autoencoder 
+# (old path fyp.models.autoencoder still works but deprecated)
 ```
 
 ### Running Locally

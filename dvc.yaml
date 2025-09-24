@@ -1,62 +1,91 @@
 stages:
-  prepare_ukdale:
-    cmd: mkdir -p data/raw/ukdale data/processed/ukdale_30min data/derived && echo "Preparing UK-DALE dataset..." && echo "ukdale_prepared" > data/derived/ukdale_ready.txt
+  ingest_lcl:
+    cmd: python -m fyp.ingestion.cli lcl --use-samples
     deps:
-    - data/raw/ukdale
+    - src/fyp/ingestion/lcl_ingestor.py
+    - src/fyp/ingestion/base.py
+    - src/fyp/ingestion/schema.py
+    - data/samples/lcl_sample.csv
     outs:
-    - data/processed/ukdale_30min
-    - data/derived/ukdale_ready.txt
-    desc: "Process UK-DALE household consumption data to 30-minute resolution"
+    - data/processed/dataset=lcl
+    - data/processed/ingestion_summary.json
+    desc: "Ingest London Smart Meters data to unified Parquet schema"
+    params:
+    - use_samples: true
 
-  prepare_lcl:
-    cmd: mkdir -p data/raw/lcl data/processed/lcl_clean data/derived && echo "Preparing London Smart Meters (LCL) dataset..." && echo "lcl_prepared" > data/derived/lcl_ready.txt
+  ingest_ukdale:
+    cmd: python -m fyp.ingestion.cli ukdale --use-samples --downsample-30min
     deps:
-    - data/raw/lcl
+    - src/fyp/ingestion/ukdale_ingestor.py
+    - src/fyp/ingestion/base.py
+    - src/fyp/ingestion/schema.py
+    - data/samples/ukdale_sample.csv
     outs:
-    - data/processed/lcl_clean
-    - data/derived/lcl_ready.txt
-    desc: "Clean and harmonize London Smart Meters dataset"
+    - data/processed/dataset=ukdale
+    - data/ukdale_30min
+    desc: "Ingest UK-DALE data with optional 30-min downsampling"
+    params:
+    - use_samples: true
+    - downsample_30min: true
 
-  prepare_ssen:
-    cmd: mkdir -p data/raw/ssen data/processed/ssen_feeders data/derived && echo "Preparing SSEN LV feeder data for validation..." && echo "ssen_prepared" > data/derived/ssen_ready.txt
+  ingest_ssen:
+    cmd: python -m fyp.ingestion.cli ssen --use-samples
     deps:
-    - data/raw/ssen
+    - src/fyp/ingestion/ssen_ingestor.py
+    - src/fyp/ingestion/base.py
+    - src/fyp/ingestion/schema.py
+    - data/samples/ssen_sample.csv
     outs:
-    - data/processed/ssen_feeders
-    - data/derived/ssen_ready.txt
-    desc: "Process SSEN distribution feeder data for validation purposes"
+    - data/processed/dataset=ssen
+    desc: "Ingest SSEN feeder data from samples or API"
+    params:
+    - use_samples: true
 
   feature_engineering:
     cmd: mkdir -p data/processed/features data/derived && echo "Engineering features from processed datasets..." && echo "features_engineered" > data/derived/features_ready.txt
     deps:
-    - data/processed/ukdale_30min
-    - data/processed/lcl_clean
-    - data/derived/ukdale_ready.txt
-    - data/derived/lcl_ready.txt
+    - data/processed/dataset=lcl
+    - data/processed/dataset=ukdale
+    - data/processed/dataset=ssen
     outs:
     - data/processed/features
     - data/derived/features_ready.txt
     desc: "Create weather, calendar, and lag features for forecasting models"
 
   train_baselines:
-    cmd: mkdir -p data/derived/models/baselines data/derived && echo "Training baseline forecasting models..." && echo "baselines_trained" > data/derived/baselines_ready.txt
+    cmd: PYTHONPATH="$(pwd)/src" python -m fyp.runner forecast --dataset lcl --use-samples && PYTHONPATH="$(pwd)/src" python -m fyp.runner anomaly --dataset lcl --use-samples
     deps:
-    - data/processed/features
-    - data/derived/features_ready.txt
+    - src/fyp/baselines/forecasting.py
+    - src/fyp/baselines/anomaly.py
+    - src/fyp/data_loader.py
+    - src/fyp/metrics.py
+    - src/fyp/runner.py
+    - data/samples/lcl_sample.csv
     outs:
-    - data/derived/models/baselines
-    - data/derived/baselines_ready.txt
-    desc: "Train statistical and traditional ML baseline models"
+    - data/derived/evaluation/forecast_metrics.csv
+    - data/derived/evaluation/anomaly_metrics.csv
+    - data/derived/evaluation/forecast_summary.json
+    - data/derived/evaluation/anomaly_summary.json
+    - data/derived/evaluation/forecast_mae_by_model.png
+    - data/derived/evaluation/anomaly_precision_recall.png
+    - data/derived/evaluation/forecast_error_distribution.png
+    - data/derived/evaluation/anomaly_f1_by_model.png
+    desc: "Train and evaluate baseline forecasting and anomaly detection models"
 
   train_custom:
-    cmd: mkdir -p data/derived/models/custom data/derived && echo "Training custom neural architectures..." && echo "custom_trained" > data/derived/custom_ready.txt
+    cmd: PYTHONPATH="$(pwd)/src" python -m fyp.runner forecast --dataset lcl --use-samples --model-type patchtst --output-dir data/derived/models/custom
     deps:
-    - data/processed/features
-    - data/derived/features_ready.txt
+    - src/fyp/models/patchtst.py
+    - src/fyp/models/autoencoder.py
+    - src/fyp/config.py
+    - src/fyp/runner.py
+    - data/samples/lcl_sample.csv
     outs:
-    - data/derived/models/custom
-    - data/derived/custom_ready.txt
-    desc: "Train PatchTST and N-BEATS variants for energy forecasting"
+    - data/derived/models/custom/forecast_metrics.csv
+    - data/derived/models/custom/forecast_summary.json
+    - data/derived/models/custom/forecast_mae_by_model.png
+    - data/derived/models/custom/forecast_error_distribution.png
+    desc: "Train PatchTST and autoencoder models for energy forecasting"
 
   train_selfplay:
     cmd: mkdir -p data/derived/models/selfplay data/derived && echo "Training self-play propose→solve→verify system..." && echo "selfplay_trained" > data/derived/selfplay_ready.txt
@@ -71,14 +100,10 @@ stages:
   evaluate_models:
     cmd: mkdir -p data/derived/evaluation data/derived/reports data/derived && echo "Evaluating all models and generating reports..." && touch data/derived/evaluation/forecast_accuracy.png && touch data/derived/evaluation/feeder_validation.png && echo "evaluation_complete" > data/derived/evaluation_ready.txt
     deps:
-    - data/derived/models/baselines
-    - data/derived/models/custom
-    - data/derived/models/selfplay
-    - data/processed/ssen_feeders
-    - data/derived/baselines_ready.txt
-    - data/derived/custom_ready.txt
-    - data/derived/selfplay_ready.txt
-    - data/derived/ssen_ready.txt
+    - data/derived/evaluation/forecast_metrics.csv
+    - data/derived/evaluation/anomaly_metrics.csv
+    - data/derived/models/custom/forecast_metrics.csv
+    - data/processed/dataset=ssen
     outs:
     - data/derived/evaluation
     - data/derived/reports
