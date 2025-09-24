@@ -6,13 +6,13 @@
 
 A production-grade machine learning system that adapts the propose→solve→verify self-play paradigm from **Absolute Zero Reasoner (AZR)** ([arXiv:2505.03335](https://arxiv.org/abs/2505.03335)) to time series forecasting and anomaly detection in energy consumption data.
 
-## 🚀 Project Vision
+## Project Vision
 
 This Final Year Project explores how self-play reinforcement learning can enhance time series forecasting by training models to propose challenging scenarios, solve them accurately, and verify solutions through realistic constraints. We focus on household energy consumption prediction with validation against real distribution network feeders.
 
 **Key Innovation**: Unlike traditional supervised learning on historical data, our approach generates synthetic scenarios that stress-test model capabilities while maintaining physical plausibility through verifiable reward signals.
 
-## 📊 Data Flow Architecture
+## Data Flow Architecture
 
 ```mermaid
 graph TB
@@ -52,7 +52,7 @@ graph TB
     J --> K
 ```
 
-## 🎯 Why This Stands Out
+## USP
 
 - **Latest Architectures**: PatchTST and N-BEATS variants with uncertainty quantification
 - **Verifiable Rewards**: Physics-based constraints ensure realistic scenario generation
@@ -61,7 +61,7 @@ graph TB
 - **Uncertainty Quantification**: Quantile regression heads and Monte Carlo dropout
 - **Open Science**: Reproducible experiments with clear data governance
 
-## 🏃‍♂️ Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.11+
@@ -94,7 +94,7 @@ pytest tests/
 dvc repro
 ```
 
-### 📊 Data Onboarding
+### Data Onboarding
 
 This project uses **DVC (Data Version Control)** to manage large datasets while keeping Git repositories lightweight.
 
@@ -124,7 +124,7 @@ dvc remote add -d myremote s3://my-bucket/fyp-data/
 dvc push
 ```
 
-**📋 Dataset Locations:**
+** Dataset Locations:**
 - `data/raw/ukdale/` → UK-DALE household consumption (~6.3GB)
 - `data/raw/lcl/` → London Smart Meters data (~8.5GB)  
 - `data/raw/ssen/` → SSEN distribution feeder data (~35MB)
@@ -186,7 +186,7 @@ dvc status
 mlflow ui
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── .github/           # GitHub workflows and issue templates
@@ -209,7 +209,7 @@ mlflow ui
 - **Data Minimization**: Only essential features extracted for modeling purposes
 - **Transparent Methods**: All processing steps documented and reproducible
 
-## 📖 Documentation
+## Documentation
 
 - [**Datasets**](docs/datasets.md): UK-DALE, London Smart Meters, and SSEN LV Feeder details
 - [**Data Governance**](docs/data_governance.md): DVC setup, provenance, and retention policies
@@ -217,7 +217,7 @@ mlflow ui
 - [**Experiments**](docs/experiments.md): MLflow organization and naming conventions
 - [**Feeder Evaluation**](docs/feeder_eval.md): Validation methodology against real networks
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
 - Development workflow and branch management
@@ -226,11 +226,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📚 Citation
+## Citation
 
 If you use this work in your research, please cite:
 
@@ -245,7 +245,7 @@ If you use this work in your research, please cite:
 
 See [CITATION.cff](CITATION.cff) for complete citation metadata.
 
-## 🔗 Related Work
+## Related Work
 
 - [Absolute Zero Reasoner (AZR)](https://arxiv.org/abs/2505.03335) - Propose→solve→verify paradigm we adapt
 - [PatchTST](https://arxiv.org/abs/2211.14730) - Patch-based transformer for time series
