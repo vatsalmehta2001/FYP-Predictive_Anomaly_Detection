@@ -239,7 +239,7 @@ If you use this work in your research, please cite:
   title = {AZR-inspired Energy Forecasting & Anomaly Detection},
   author = {Your Name},
   year = {2025},
-  url = {https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection}
+  url = {https://github.com/vatsalmehta2001/FYP-Predictive_Anomaly_Detection}
 }
 ```
 
