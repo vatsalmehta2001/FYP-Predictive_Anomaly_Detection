@@ -124,13 +124,13 @@ dvc remote add -d myremote s3://my-bucket/fyp-data/
 dvc push
 ```
 
-** Dataset Locations:**
+**Dataset Locations:**
 - `data/raw/ukdale/` → UK-DALE household consumption (~6.3GB)
 - `data/raw/lcl/` → London Smart Meters data (~8.5GB)  
 - `data/raw/ssen/` → SSEN distribution feeder data (~35MB)
 - `data/samples/` → Tiny synthetic samples for demos/CI (<60KB)
 
-**🔗 Resources:**
+**Resources:**
 - [Dataset download links & setup](docs/download_links.md)
 - [Complete DVC workflow guide](data/README_raw.md)
 - [Ingestion specifications](docs/ingestion_specs.md)
@@ -201,7 +201,7 @@ mlflow ui
 └── dvc.yaml          # DVC pipeline definition
 ```
 
-## 🔒 Ethics & Privacy
+## Ethics & Privacy
 
 - **No PII Joins**: Personal identifiable information is never linked across datasets
 - **SSEN Validation Only**: Distribution network data used solely for external validation
