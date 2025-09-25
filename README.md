@@ -125,10 +125,10 @@ dvc push
 ```
 
 **Dataset Locations:**
-- `data/raw/ukdale/` → UK-DALE household consumption (~6.3GB)
-- `data/raw/lcl/` → London Smart Meters data (~8.5GB)  
-- `data/raw/ssen/` → SSEN distribution feeder data (~35MB)
-- `data/samples/` → Tiny synthetic samples for demos/CI (<60KB)
+- `data/raw/ukdale/` → UK-DALE household consumption 
+- `data/raw/lcl/` → London Smart Meters data   
+- `data/raw/ssen/` → SSEN distribution feeder data
+- `data/samples/` → Tiny synthetic samples for demos/CI
 
 **Resources:**
 - [Dataset download links & setup](docs/download_links.md)
