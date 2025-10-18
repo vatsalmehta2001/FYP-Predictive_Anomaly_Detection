@@ -83,7 +83,7 @@ data/raw/ssen/
 
 ## Data Tracking with DVC
 
-**⚠️ IMPORTANT: Track with DVC; never commit raw data to Git**
+**IMPORTANT: Track with DVC; never commit raw data to Git**
 
 After downloading and placing datasets in their respective directories:
 

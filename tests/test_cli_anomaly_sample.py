@@ -79,7 +79,7 @@ def test_cli_anomaly_autoencoder_sample():
                 plot_file = created_plots[0]
                 assert plot_file.stat().st_size > 1000, f"Plot file {plot_file} seems too small"
             
-            print(f"✓ CLI test successful: {len(created_files)} files, {len(created_plots)} plots")
+            print(f"[PASS] CLI test successful: {len(created_files)} files, {len(created_plots)} plots")
             
         except subprocess.TimeoutExpired:
             pytest.skip("CLI test timed out (>15s)")
@@ -128,7 +128,7 @@ def test_cli_anomaly_baseline_sample():
             created_files = list(output_dir.glob("*"))
             assert len(created_files) >= 1, f"No output files created: {list(output_dir.iterdir()) if output_dir.exists() else 'directory does not exist'}"
             
-            print(f"✓ Baseline CLI test successful: {len(created_files)} artifacts")
+            print(f"[PASS] Baseline CLI test successful: {len(created_files)} artifacts")
             
         except subprocess.TimeoutExpired:
             pytest.skip("Baseline CLI test timed out")
@@ -160,7 +160,7 @@ def test_cli_help_text():
             assert "autoencoder" in help_text
             assert "patchtst" in help_text
             
-            print("✓ CLI help text includes new model options")
+            print("[PASS] CLI help text includes new model options")
         else:
             pytest.skip("CLI help not available")
             

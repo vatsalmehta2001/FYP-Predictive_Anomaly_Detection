@@ -156,4 +156,4 @@ data/samples/
 - **For Demos**: Samples provide quick visualization and pipeline validation
 - **For Experiments**: Real datasets required for meaningful research results
 
-**⚠️ Important:** These synthetic samples are **not suitable for research or publication**. They are purely for development convenience and CI automation. All experimental work should use the complete real datasets described above.
+**Important:** These synthetic samples are **not suitable for research or publication**. They are purely for development convenience and CI automation. All experimental work should use the complete real datasets described above.
