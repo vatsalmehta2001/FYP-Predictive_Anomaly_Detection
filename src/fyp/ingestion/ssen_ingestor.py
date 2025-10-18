@@ -121,16 +121,25 @@ class SSENIngestor(BaseIngestor):
             return []
     
     def read_raw_data(self) -> Iterator[Dict[str, Any]]:
-        """Read SSEN data from samples or API."""
-        # Load feeder lookup
+        """Read SSEN feeder metadata from CSV.
+        
+        Note: This only processes the feeder lookup CSV (metadata).
+        Time-series consumption data requires either:
+        - Research partnership with SSEN
+        - API access (currently not available for this project)
+        - Pseudo-feeder generation from LCL aggregations (future work)
+        """
+        # Load feeder lookup - this is our only data source for now
         self.feeder_lookup = self._load_feeder_lookup()
         
         if self.use_samples:
             # Use sample data
             yield from self._read_sample_data()
         else:
-            # Use API
-            yield from self._read_api_data()
+            # Read metadata from CSV and generate placeholder records
+            # NOTE: This is metadata only, not actual time-series data
+            self.logger.info("Processing SSEN feeder metadata (no time-series data available)")
+            yield from self._read_metadata_only()
     
     def _read_sample_data(self) -> Iterator[Dict[str, Any]]:
         """Read sample CSV data."""
@@ -211,27 +220,46 @@ class SSENIngestor(BaseIngestor):
             "retrieved_at": datetime.utcnow(),
         }
     
-    def _generate_mock_data(self) -> Iterator[Dict[str, Any]]:
-        """Generate mock data for testing when API unavailable."""
-        # Use sample feeders or generate simple pattern
-        feeder_ids = ["FDR_001", "FDR_002", "FDR_003"]
+    def _read_metadata_only(self) -> Iterator[Dict[str, Any]]:
+        """Read feeder metadata from CSV without time-series data.
         
-        base_date = pd.Timestamp("2023-01-01", tz="UTC")
-        for hour in range(24):
-            for minute in [0, 30]:
-                ts = base_date + pd.Timedelta(hours=hour, minutes=minute)
-                
-                for feeder_id in feeder_ids:
-                    # Simple daily pattern
-                    base_load = 20000  # Wh
-                    hour_factor = 1 + 0.5 * abs(12 - hour) / 12  # Peak at noon
-                    
-                    yield {
-                        "feeder_id": feeder_id,
-                        "timestamp": ts,
-                        "wh_30m": base_load * hour_factor,
-                        "source": "mock_data",
-                    }
+        This generates a single metadata record per feeder with constraint information.
+        Actual time-series consumption data is not available in this dataset.
+        """
+        if self.feeder_lookup is None or self.feeder_lookup.empty:
+            self.logger.warning("No feeder lookup data available")
+            return
+        
+        self.logger.info(f"Processing {len(self.feeder_lookup)} feeders from metadata CSV")
+        
+        # We don't have time-series data, so we won't yield consumption records
+        # Instead, we save metadata separately
+        metadata_path = self.output_root / "ssen_metadata.parquet"
+        metadata_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Save metadata with constraints
+        metadata_df = self.feeder_lookup.copy()
+        
+        # Add constraint columns if not present
+        if 'voltage_nominal_v' not in metadata_df.columns:
+            metadata_df['voltage_nominal_v'] = 230.0  # UK standard
+        if 'voltage_tolerance_pct' not in metadata_df.columns:
+            metadata_df['voltage_tolerance_pct'] = 10.0  # UK statutory ±10%
+        if 'power_factor_min' not in metadata_df.columns:
+            metadata_df['power_factor_min'] = 0.8  # Typical minimum
+        if 'power_factor_max' not in metadata_df.columns:
+            metadata_df['power_factor_max'] = 1.0
+        
+        # Save to parquet
+        metadata_df.to_parquet(metadata_path, index=False)
+        self.logger.info(f"Saved feeder metadata to {metadata_path}")
+        self.logger.info(f"Metadata includes: voltage limits, capacity ratings, locations")
+        self.logger.info("Note: Time-series consumption data not available - use for constraints only")
+        
+        # Don't yield any records since we don't have time-series data
+        # This will result in 0 records processed, which is correct
+        return
+        yield  # Make this a generator
     
     def transform_record(self, record: Dict[str, Any]) -> Optional[EnergyReading]:
         """Transform SSEN record to unified schema."""

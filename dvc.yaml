@@ -97,13 +97,24 @@ stages:
     - data/derived/selfplay_ready.txt
     desc: "Train complete self-play system with scenario generation and verification"
 
+  poster_numbers:
+    cmd: PYTHONPATH="$(pwd)/src" python -m fyp.evaluation.final_poster --seed 42
+    deps:
+    - src/fyp/evaluation/final_poster.py
+    - data/samples/lcl_sample.csv
+    outs:
+    - data/derived/poster/poster_metrics.json
+    - data/derived/poster/metrics_summary.csv
+    - data/derived/poster/README_poster_numbers.md
+    desc: "Generate poster-ready metrics with confidence intervals"
+
   evaluate_models:
     cmd: mkdir -p data/derived/evaluation data/derived/reports data/derived && echo "Evaluating all models and generating reports..." && touch data/derived/evaluation/forecast_accuracy.png && touch data/derived/evaluation/feeder_validation.png && echo "evaluation_complete" > data/derived/evaluation_ready.txt
     deps:
     - data/derived/evaluation/forecast_metrics.csv
     - data/derived/evaluation/anomaly_metrics.csv
     - data/derived/models/custom/forecast_metrics.csv
-    - data/processed/dataset=ssen
+    - data/derived/poster/poster_metrics.json
     outs:
     - data/derived/evaluation
     - data/derived/reports

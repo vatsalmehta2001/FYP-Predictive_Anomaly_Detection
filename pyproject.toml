@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 name = "fyp-energy-forecasting"
 version = "0.2.0"
 description = "AZR-inspired Energy Forecasting & Anomaly Detection for UK households with feeder validation"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Vatsal Mehta <vatsalmehta@aston.ac.uk>"]
 readme = "README.md"
 packages = [{include = "fyp", from = "src"}]
 license = "MIT"
@@ -20,6 +20,11 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/issues"
+"Documentation" = "https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/tree/main/docs"
+"Changelog" = "https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/blob/main/CHANGELOG.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"

@@ -70,115 +70,133 @@ class UKDALEIngestor(BaseIngestor):
             }
     
     def _read_h5_format(self, file_path: Path) -> Iterator[Dict[str, Any]]:
-        """Read UK-DALE HDF5 format with proper energy conversion."""
-        with h5py.File(file_path, "r") as f:
-            # Calculate file hash for provenance
+        """Read UK-DALE HDF5 format (pandas HDFStore) with proper energy conversion."""
+        import warnings
+        warnings.filterwarnings('ignore', category=pd.errors.PerformanceWarning)
+        
+        self.logger.info(f"Opening UK-DALE HDF5 file: {file_path}")
+        
+        # Use pandas HDFStore for reading
+        with pd.HDFStore(file_path, mode='r') as store:
+            # Calculate file hash for provenance  
             file_hash = self._calculate_file_hash(file_path)
             
-            # Iterate through buildings (houses)
-            for building_key in f.keys():
-                if not building_key.startswith("building"):
-                    continue
+            # Get all keys (tables) in the store
+            keys = store.keys()
+            self.logger.info(f"Found {len(keys)} tables in HDF5 file")
+            
+            # Process each building
+            buildings = set()
+            for key in keys:
+                if '/building' in key:
+                    building_num = key.split('/building')[1].split('/')[0]
+                    buildings.add(int(building_num))
+            
+            self.logger.info(f"Processing {len(buildings)} buildings")
+            
+            for house_id in sorted(buildings):
+                # Find all meters for this building
+                building_pattern = f'/building{house_id}/elec/meter'
+                meter_keys = [k for k in keys if k.startswith(building_pattern)]
                 
-                building = f[building_key]
-                house_id = int(building_key.replace("building", ""))
+                self.logger.info(f"Building{house_id}: found {len(meter_keys)} meters")
                 
-                # Read elec meter data
-                if "elec" not in building:
-                    continue
-                
-                elec = building["elec"]
-                
-                # Process each meter
-                for meter_key in elec.keys():
-                    if not meter_key.startswith("meter"):
-                        continue
+                for meter_key in meter_keys:
+                    # Extract meter number
+                    meter_id = int(meter_key.split('meter')[-1].replace('/table', ''))
                     
-                    meter = elec[meter_key]
-                    meter_id = int(meter_key.replace("meter", ""))
+                    # Determine appliance type
+                    appliance = "aggregate" if meter_id == 1 else f"appliance_{meter_id}"
                     
-                    # Get appliance name if available
-                    appliance = "unknown"
-                    if "appliances" in meter.attrs:
-                        appliances = meter.attrs["appliances"]
-                        if isinstance(appliances, bytes):
-                            appliances = appliances.decode()
-                        appliance = appliances
-                    elif meter_id == 1:
-                        appliance = "aggregate"
-                    
-                    # Read power data
-                    if "power" not in meter:
-                        continue
-                    
-                    power_data = meter["power"]
-                    
-                    # Find active or apparent power
-                    power_key = None
-                    for key in ["active", "apparent"]:
-                        if key in power_data:
-                            power_key = key
-                            break
-                    
-                    if not power_key:
-                        continue
-                    
-                    # Read all timestamps and values for this meter
-                    timestamps = power_data[power_key][:, 0]
-                    values = power_data[power_key][:, 1]
-                    
-                    # For samples, use smaller subset
-                    if self.use_samples:
-                        # Take first 200 readings for testing
-                        timestamps = timestamps[:200]
-                        values = values[:200]
-                    
-                    # Convert power to energy using native sampling rate
                     try:
-                        if self.downsample_30min:
-                            # Convert to 30-minute energy
-                            ts_30min, energy_kwh_30min, intervals = convert_power_to_energy(
-                                values, timestamps, target_interval_mins=30
-                            )
+                        # Read the table for this meter
+                        # Use chunksize to avoid loading entire table into memory
+                        chunk_size = 50000
+                        
+                        for chunk_num, df_chunk in enumerate(store.select(meter_key, chunksize=chunk_size)):
+                            # Skip empty chunks
+                            if df_chunk.empty:
+                                continue
                             
-                            for ts, energy, interval in zip(ts_30min, energy_kwh_30min, intervals):
-                                yield {
-                                    "house_id": house_id,
-                                    "meter_id": meter_id,
-                                    "timestamp": pd.to_datetime(ts, utc=True),
-                                    "energy_kwh": float(energy),
-                                    "interval_mins": int(interval),
-                                    "channel": appliance,
-                                    "source": f"{file_path.name}/building{house_id}/meter{meter_id}",
-                                    "file_hash": file_hash,
-                                }
-                        else:
-                            # Native resolution with proper energy calculation
-                            time_diffs = np.diff(timestamps)
-                            median_interval_sec = np.median(time_diffs[time_diffs > 0]) if len(time_diffs) > 0 else 60.0
-                            interval_hours = median_interval_sec / 3600.0
+                            # DataFrame has MultiIndex columns like ('power', 'active') or ('power', 'apparent')
+                            # and DatetimeIndex for timestamps
                             
-                            # Sample data to avoid memory issues
-                            sample_rate = max(1, len(timestamps) // 1000) if not self.use_samples else 1
+                            # Find power column (prefer 'active', fall back to 'apparent')
+                            power_col = None
+                            if ('power', 'active') in df_chunk.columns:
+                                power_col = ('power', 'active')
+                            elif ('power', 'apparent') in df_chunk.columns:
+                                power_col = ('power', 'apparent')
+                            else:
+                                # Try to find any column with 'power' in it
+                                power_cols = [col for col in df_chunk.columns if 'power' in str(col).lower()]
+                                if power_cols:
+                                    power_col = power_cols[0]
+                                else:
+                                    self.logger.warning(f"No power column in {meter_key}, columns: {df_chunk.columns.tolist()}")
+                                    continue
                             
-                            for i in range(0, len(timestamps), sample_rate):
-                                ts = pd.to_datetime(timestamps[i], unit="s", utc=True)
-                                # Convert instantaneous power to energy
-                                energy_kwh = (values[i] * interval_hours) / 1000.0
+                            # Extract timestamps from index (already datetime)
+                            timestamps = df_chunk.index
+                            
+                            # Extract power values in Watts
+                            power_watts = df_chunk[power_col].values
+                            
+                            # Convert timestamps to UTC seconds for processing
+                            timestamps_sec = timestamps.astype('int64') / 1e9
+                            
+                            # Calculate time differences to determine intervals
+                            if len(timestamps_sec) > 1:
+                                time_diffs = np.diff(timestamps_sec)
+                                median_interval_sec = np.median(time_diffs[time_diffs > 0]) if len(time_diffs[time_diffs > 0]) > 0 else 6.0
+                            else:
+                                median_interval_sec = 6.0  # Default 6 seconds for UK-DALE
+                            
+                            # Skip if this is test/sample mode and we've processed enough
+                            if self.use_samples and chunk_num > 0:
+                                break
+                            
+                            if self.downsample_30min:
+                                # Downsample to 30-minute intervals
+                                ts_30min, energy_kwh_30min, intervals = convert_power_to_energy(
+                                    power_watts, timestamps_sec, target_interval_mins=30
+                                )
                                 
-                                yield {
-                                    "house_id": house_id,
-                                    "meter_id": meter_id,
-                                    "timestamp": ts,
-                                    "energy_kwh": float(energy_kwh),
-                                    "interval_mins": int(median_interval_sec / 60),
-                                    "channel": appliance,
-                                    "source": f"{file_path.name}/building{house_id}/meter{meter_id}",
-                                    "file_hash": file_hash,
-                                }
+                                for ts, energy, interval in zip(ts_30min, energy_kwh_30min, intervals):
+                                    yield {
+                                        "house_id": house_id,
+                                        "meter_id": meter_id,
+                                        "timestamp": pd.to_datetime(ts, unit='s', utc=True),
+                                        "energy_kwh": float(energy),
+                                        "interval_mins": int(interval),
+                                        "channel": appliance,
+                                        "source": f"building{house_id}/meter{meter_id}",
+                                        "file_hash": file_hash,
+                                    }
+                            else:
+                                # Native resolution: sample every Nth record to avoid excessive data
+                                sample_rate = 10 if not self.use_samples else 1
+                                
+                                for i in range(0, len(timestamps_sec), sample_rate):
+                                    # Convert power to energy for this interval
+                                    interval_hours = median_interval_sec / 3600.0
+                                    energy_kwh = (power_watts[i] * interval_hours) / 1000.0
+                                    
+                                    yield {
+                                        "house_id": house_id,
+                                        "meter_id": meter_id,
+                                        "timestamp": pd.to_datetime(timestamps_sec[i], unit='s', utc=True),
+                                        "energy_kwh": float(energy_kwh),
+                                        "interval_mins": int(median_interval_sec / 60),
+                                        "channel": appliance,
+                                        "source": f"building{house_id}/meter{meter_id}",
+                                        "file_hash": file_hash,
+                                    }
                     
                     except Exception as e:
-                        self.logger.error(f"Error processing meter {house_id}/{meter_id}: {e}")
+                        self.logger.error(f"Error processing building{house_id}/meter{meter_id}: {e}")
+                        import traceback
+                        self.logger.debug(traceback.format_exc())
                         continue
     
     def _calculate_file_hash(self, file_path: Path) -> str:

@@ -99,8 +99,21 @@ class BaseIngestor(ABC):
             quality_metrics = calculate_data_quality_metrics(df, 'ts_utc', 'energy_kwh')
             self.stats.update(quality_metrics)
         
-        # Convert to PyArrow Table with schema
-        table = pa.Table.from_pandas(df, schema=UNIFIED_SCHEMA)
+        # Create extended schema that includes partition columns
+        extended_schema = pa.schema([
+            ("dataset", pa.string()),
+            ("entity_id", pa.string()),
+            ("ts_utc", pa.timestamp("ns", tz="UTC")),
+            ("interval_mins", pa.int8()),
+            ("energy_kwh", pa.float32()),
+            ("source", pa.string()),
+            ("extras", pa.string()),
+            ("year", pa.string()),
+            ("month", pa.string()),
+        ])
+        
+        # Convert to PyArrow Table with extended schema
+        table = pa.Table.from_pandas(df, schema=extended_schema)
         
         # Write partitioned with 128MB row groups
         pq.write_to_dataset(
@@ -108,7 +121,6 @@ class BaseIngestor(ABC):
             root_path=str(output_dir),
             partition_cols=["dataset", "year", "month"],
             existing_data_behavior="overwrite_or_ignore",
-            use_legacy_dataset=False,
             max_rows_per_group=1000000,  # ~128MB for typical energy data
             compression="snappy",
         )

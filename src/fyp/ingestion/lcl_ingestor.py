@@ -76,26 +76,53 @@ class LCLIngestor(BaseIngestor):
     
     def _read_lcl_format(self, file_path: Path) -> Iterator[Dict[str, Any]]:
         """Read full LCL CSV format with chunking."""
-        # LCL format: LCLid,DateTime,KWH/hh (per half hour),Acorn,Acorn_grouped
+        # LCL format can be:
+        # - LCLid,stdorToU,DateTime,KWH/hh (per half hour) [4 columns]
+        # - LCLid,DateTime,KWH/hh,Acorn,Acorn_grouped [5 columns]
         chunk_size = 100000
         
         for chunk in pd.read_csv(file_path, chunksize=chunk_size):
-            # Rename columns for consistency
-            chunk.columns = ["household_id", "timestamp", "kwh_30m", "acorn", "acorn_grouped"]
+            # Dynamically handle column count
+            num_cols = len(chunk.columns)
+            
+            if num_cols == 4:
+                # Format: LCLid, stdorToU, DateTime, KWH/hh
+                chunk.columns = ["household_id", "tariff_type", "timestamp", "kwh_30m"]
+            elif num_cols == 5:
+                # Format: LCLid, DateTime, KWH/hh, Acorn, Acorn_grouped
+                chunk.columns = ["household_id", "timestamp", "kwh_30m", "acorn", "acorn_grouped"]
+            else:
+                self.logger.warning(f"Unexpected column count: {num_cols}")
+                continue
             
             # Parse timestamp
-            chunk["timestamp"] = pd.to_datetime(chunk["timestamp"])
+            chunk["timestamp"] = pd.to_datetime(chunk["timestamp"], errors='coerce')
+            
+            # Convert kwh_30m to float, handling any whitespace/errors
+            chunk["kwh_30m"] = pd.to_numeric(chunk["kwh_30m"], errors='coerce')
             
             # Yield records
             for _, row in chunk.iterrows():
-                yield {
+                # Skip rows with invalid data
+                if pd.isna(row["timestamp"]) or pd.isna(row["kwh_30m"]):
+                    continue
+                    
+                record = {
                     "household_id": str(row["household_id"]),
                     "timestamp": row["timestamp"],
                     "kwh_30m": float(row["kwh_30m"]),
-                    "acorn": row.get("acorn"),
-                    "acorn_grouped": row.get("acorn_grouped"),
                     "source": file_path.name,
                 }
+                
+                # Add optional columns if present
+                if "tariff_type" in row and pd.notna(row["tariff_type"]):
+                    record["tariff_type"] = str(row["tariff_type"])
+                if "acorn" in row and pd.notna(row["acorn"]):
+                    record["acorn"] = str(row["acorn"])
+                if "acorn_grouped" in row and pd.notna(row["acorn_grouped"]):
+                    record["acorn_grouped"] = str(row["acorn_grouped"])
+                
+                yield record
     
     def transform_record(self, record: Dict[str, Any]) -> Optional[EnergyReading]:
         """Transform LCL record to unified schema."""
@@ -109,12 +136,13 @@ class LCLIngestor(BaseIngestor):
                 "ingestion_version": "v2.0",
             }
             
-            if "acorn" in record and pd.notna(record["acorn"]):
-                extras["acorn"] = str(record["acorn"])
-            if "acorn_grouped" in record and pd.notna(record["acorn_grouped"]):
-                extras["acorn_grouped"] = str(record["acorn_grouped"])
-            
-            # Add file hash if available
+            # Add optional metadata fields
+            if "tariff_type" in record:
+                extras["tariff_type"] = record["tariff_type"]
+            if "acorn" in record:
+                extras["acorn"] = record["acorn"]
+            if "acorn_grouped" in record:
+                extras["acorn_grouped"] = record["acorn_grouped"]
             if "file_hash" in record:
                 extras["sha256"] = record["file_hash"]
             

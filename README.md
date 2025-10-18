@@ -61,6 +61,53 @@ graph TB
 - **Uncertainty Quantification**: Quantile regression heads and Monte Carlo dropout
 - **Open Science**: Reproducible experiments with clear data governance
 
+## Project Status
+
+**Current Phase**: Data Ingestion & Exploration  
+**Next Milestone**: Self-Play Prototype Implementation
+
+<table>
+<tr><th>Completed</th><th>In Progress</th><th>Upcoming</th></tr>
+<tr>
+<td>
+
+- Data infrastructure (DVC)
+- Datasets acquired (15.2GB)
+- Ingestion pipeline built
+- Baseline models implemented
+- Testing framework
+
+</td>
+<td>
+
+- Full dataset ingestion
+- Exploratory analysis
+- Anomaly strategy defined
+- SSEN constraint extraction
+
+</td>
+<td>
+
+- Self-play architecture
+- Proposer/Verifier agents
+- Model training
+- Evaluation & writing
+
+</td>
+</tr>
+</table>
+
+### Datasets Overview
+
+| Dataset | Size | Records | Households | Purpose |
+|---------|------|---------|------------|---------|
+| **LCL** (London Smart Meters) | 8.54 GB | ~167M readings | 5,567 | Training & validation |
+| **UK-DALE** | 6.33 GB | ~114M readings | 5 houses | Appliance-level analysis |
+| **SSEN** (Feeder Metadata) | 36.7 MB | ~50K feeders | N/A | Physical constraints |
+| **Total** | **~15 GB** | **~281M readings** | **5,572+** | — |
+
+All datasets tracked with DVC. See `data/README_raw.md` for access instructions.
+
 ## Quick Start
 
 ### Prerequisites
@@ -200,6 +247,36 @@ mlflow ui
 │   └── derived/      # Model outputs and artifacts
 └── dvc.yaml          # DVC pipeline definition
 ```
+
+## Known Issues & Limitations
+
+### Data Limitations
+1. **No Ground-Truth Anomaly Labels**: Datasets lack labeled anomalies. We address this through:
+   - Physics-based constraints from SSEN
+   - Self-play learning without labels
+   - Synthetic test set for quantitative evaluation
+
+2. **SSEN Time-Series Data**: Currently have feeder metadata only. Time-series consumption requires:
+   - Research partnership agreement, OR
+   - API access (pending), OR
+   - Pseudo-feeder generation from LCL aggregations (our approach)
+
+### Technical Constraints
+3. **Large Dataset Processing**: LCL CSV (8.5GB) requires:
+   - Chunked reading for memory efficiency
+   - Parquet conversion for fast queries
+   - Current implementation tested on 16GB+ RAM
+
+4. **HDF5 Dependencies**: UK-DALE requires `h5py` library and proper HDF5 handling
+
+### Scope Decisions
+5. **Focus on Novelty Over SOTA**: This project prioritizes:
+   - Novel self-play approach to unsupervised anomaly detection
+   - Physics-informed verification using real network constraints
+   - Demonstrating feasibility of label-free learning
+   - **NOT** achieving state-of-the-art forecasting accuracy
+
+These are documented features, not bugs. See `docs/anomaly_strategy.md` for our approach.
 
 ## Ethics & Privacy
 
