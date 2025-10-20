@@ -37,7 +37,8 @@ class UKDALEIngestor(BaseIngestor):
                 raise FileNotFoundError(f"Sample file not found: {sample_file}")
         
         # Look for UK-DALE HDF5 file
-        ukdale_dir = self.input_root / "ukdale"
+        # input_root is already data/raw/ukdale, no need to add another 'ukdale'
+        ukdale_dir = self.input_root
         h5_files = list(ukdale_dir.glob("*.h5"))
         
         if not h5_files:
@@ -260,12 +261,9 @@ class UKDALEIngestor(BaseIngestor):
     
     def run(self) -> None:
         """Run ingestion with optional downsampling."""
-        # First, run native resolution ingestion
+        # Note: Downsampling is now done during read phase (in _read_h5_format)
+        # when downsample_30min=True, so we don't need post-processing
         super().run()
-        
-        # Then, if requested, create 30-min downsampled version
-        if self.downsample_30min and not self.dry_run:
-            self._create_downsampled_version()
     
     def _create_downsampled_version(self) -> None:
         """Create 30-minute downsampled version from native data."""

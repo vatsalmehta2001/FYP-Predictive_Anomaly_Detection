@@ -76,7 +76,7 @@ class BaseIngestor(ABC):
         readings: List[EnergyReading],
         output_dir: Path
     ) -> None:
-        """Write a batch of readings to partitioned Parquet with optimized row groups."""
+        """Write a batch of readings to Parquet files (simplified, no partitioning)."""
         if not readings:
             return
         
@@ -86,21 +86,13 @@ class BaseIngestor(ABC):
             record = reading.model_dump()
             # Convert extras dict to JSON string
             record["extras"] = json.dumps(record["extras"])
-            # Add partition columns
-            record["year"] = str(reading.ts_utc.year)
-            record["month"] = f"{reading.ts_utc.month:02d}"
             records.append(record)
         
         # Create DataFrame
         df = pd.DataFrame(records)
         
-        # Add quality metrics to first record's extras
-        if not df.empty:
-            quality_metrics = calculate_data_quality_metrics(df, 'ts_utc', 'energy_kwh')
-            self.stats.update(quality_metrics)
-        
-        # Create extended schema that includes partition columns
-        extended_schema = pa.schema([
+        # Simple schema - no partitions
+        schema = pa.schema([
             ("dataset", pa.string()),
             ("entity_id", pa.string()),
             ("ts_utc", pa.timestamp("ns", tz="UTC")),
@@ -108,28 +100,51 @@ class BaseIngestor(ABC):
             ("energy_kwh", pa.float32()),
             ("source", pa.string()),
             ("extras", pa.string()),
-            ("year", pa.string()),
-            ("month", pa.string()),
         ])
         
-        # Convert to PyArrow Table with extended schema
-        table = pa.Table.from_pandas(df, schema=extended_schema)
+        # Convert to PyArrow Table
+        table = pa.Table.from_pandas(df, schema=schema)
         
-        # Write partitioned with 128MB row groups
-        pq.write_to_dataset(
-            table,
-            root_path=str(output_dir),
-            partition_cols=["dataset", "year", "month"],
-            existing_data_behavior="overwrite_or_ignore",
-            max_rows_per_group=1000000,  # ~128MB for typical energy data
-            compression="snappy",
-        )
+        # Simple directory structure
+        dataset_name = df['dataset'].iloc[0] if not df.empty else "unknown"
+        dataset_dir = output_dir / f"{dataset_name}_data"
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Use batch counter for predictable filenames
+        if not hasattr(self, '_batch_counter'):
+            self._batch_counter = 0
+        self._batch_counter += 1
+        
+        filename = f"batch_{self._batch_counter:06d}.parquet"
+        filepath = dataset_dir / filename
+        
+        # Write the file
+        pq.write_table(table, filepath, compression="snappy")
+        
+        logger.info(f"Wrote batch {self._batch_counter}: {len(table)} records → {filename}")
     
     def write_summary(self, output_dir: Path) -> None:
-        """Write ingestion summary."""
+        """Write ingestion summary with final quality metrics."""
+        # Calculate quality metrics on all data if available
+        dataset_name = self.__class__.__name__.replace("Ingestor", "").lower()
+        dataset_dir = output_dir / f"{dataset_name}_data"
+        
+        if dataset_dir.exists():
+            try:
+                # Read a sample to calculate quality metrics
+                import polars as pl
+                sample_df = pl.scan_parquet(str(dataset_dir / "*.parquet")).head(100000).collect()
+                if len(sample_df) > 0:
+                    # Convert to pandas for quality metrics calculation
+                    sample_pd = sample_df.to_pandas()
+                    quality_metrics = calculate_data_quality_metrics(sample_pd, 'ts_utc', 'energy_kwh')
+                    self.stats.update(quality_metrics)
+            except Exception as e:
+                logger.warning(f"Could not calculate quality metrics: {e}")
+        
         summary = {
             "timestamp": datetime.utcnow().isoformat(),
-            "dataset": self.__class__.__name__.replace("Ingestor", "").lower(),
+            "dataset": dataset_name,
             "stats": self.stats,
             "use_samples": self.use_samples,
             "dry_run": self.dry_run,

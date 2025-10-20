@@ -30,7 +30,8 @@ class LCLIngestor(BaseIngestor):
                 raise FileNotFoundError(f"Sample file not found: {sample_file}")
         
         # Look for main LCL data files
-        lcl_dir = self.input_root / "lcl"
+        # input_root is already data/raw/lcl, no need to add another 'lcl'
+        lcl_dir = self.input_root
         patterns = ["*LCL*.csv", "*.csv"]
         
         files = []

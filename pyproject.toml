@@ -27,12 +27,14 @@ classifiers = [
 "Changelog" = "https://github.com/vatsalmehta/FYP-Predictive_Anomaly_Detection/blob/main/CHANGELOG.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
 # Data manipulation and analysis
 polars = "^0.20.0"
 pyarrow = "^14.0.0"
 numpy = "^1.24.0"
 pandas = "^2.1.0"
+h5py = "^3.10.0"
+tables = "^3.9.0"
 
 # Machine learning and statistics
 scikit-learn = "^1.3.0"
@@ -53,6 +55,8 @@ pydantic = "^2.5.0"
 click = "^8.1.0"
 python-dotenv = "^1.0.0"
 tqdm = "^4.66.0"
+rich = "^13.7.0"
+psutil = "^5.9.0"
 
 # Time series specific
 tslearn = "^0.6.0"
