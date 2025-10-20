@@ -7,7 +7,7 @@ stages:
     - src/fyp/ingestion/schema.py
     - data/samples/lcl_sample.csv
     outs:
-    - data/processed/dataset=lcl
+    - data/processed/lcl_data
     - data/processed/ingestion_summary.json
     desc: "Ingest London Smart Meters data to unified Parquet schema"
     params:
@@ -21,7 +21,7 @@ stages:
     - src/fyp/ingestion/schema.py
     - data/samples/ukdale_sample.csv
     outs:
-    - data/processed/dataset=ukdale
+    - data/processed/ukdale_data
     - data/ukdale_30min
     desc: "Ingest UK-DALE data with optional 30-min downsampling"
     params:
@@ -36,7 +36,7 @@ stages:
     - src/fyp/ingestion/schema.py
     - data/samples/ssen_sample.csv
     outs:
-    - data/processed/dataset=ssen
+    - data/processed/ssen_data
     desc: "Ingest SSEN feeder data from samples or API"
     params:
     - use_samples
@@ -44,9 +44,9 @@ stages:
   feature_engineering:
     cmd: mkdir -p data/processed/features data/derived && echo "Engineering features from processed datasets..." && echo "features_engineered" > data/derived/features_ready.txt
     deps:
-    - data/processed/dataset=lcl
-    - data/processed/dataset=ukdale
-    - data/processed/dataset=ssen
+    - data/processed/lcl_data
+    - data/processed/ukdale_data
+    - data/processed/ssen_data
     outs:
     - data/processed/features
     - data/derived/features_ready.txt
