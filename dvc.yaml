@@ -116,7 +116,8 @@ stages:
     - data/derived/models/custom/forecast_metrics.csv
     - data/derived/poster/poster_metrics.json
     outs:
-    - data/derived/evaluation
+    - data/derived/evaluation/forecast_accuracy.png
+    - data/derived/evaluation/feeder_validation.png
     - data/derived/reports
     - data/derived/evaluation_ready.txt
     desc: "Comprehensive evaluation including feeder validation against SSEN data"
