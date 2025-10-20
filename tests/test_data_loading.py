@@ -95,7 +95,7 @@ class TestProcessedDataLoading:
         assert processed_dir.exists(), "Processed data directory missing"
 
     @pytest.mark.skipif(
-        not (PROJECT_ROOT / "data" / "processed" / "dataset=lcl").exists(),
+        not (PROJECT_ROOT / "data" / "processed" / "lcl_data").exists(),
         reason="LCL not yet processed",
     )
     def test_load_processed_lcl(self):
@@ -116,7 +116,7 @@ class TestProcessedDataLoading:
             pytest.skip(f"Could not load processed LCL: {e}")
 
     @pytest.mark.skipif(
-        not (PROJECT_ROOT / "data" / "processed" / "dataset=ukdale").exists(),
+        not (PROJECT_ROOT / "data" / "processed" / "ukdale_data").exists(),
         reason="UK-DALE not yet processed",
     )
     def test_load_processed_ukdale(self):

@@ -47,6 +47,9 @@ jobs:
       - name: Install package
         run: poetry install --no-interaction --only-root
 
+      - name: Create data directories
+        run: mkdir -p data/processed data/raw data/derived
+
       - name: Ensure dev tools installed
         run: poetry run python -c "import black, ruff, pytest"
 
