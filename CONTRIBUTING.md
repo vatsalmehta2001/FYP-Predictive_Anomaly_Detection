@@ -9,7 +9,7 @@ Thank you for your interest in contributing to the AZR-inspired Energy Forecasti
 We use a Git flow branching model:
 
 - **`main`**: Production-ready code, tagged releases
-- **`dev`**: Integration branch for ongoing development  
+- **`dev`**: Integration branch for ongoing development
 - **Feature branches**: `feature/your-feature-name` branched from `dev`
 - **Hotfix branches**: `hotfix/issue-description` for urgent fixes
 
@@ -25,13 +25,13 @@ We use a Git flow branching model:
    ```bash
    # Install dependencies
    poetry install
-   
+
    # Activate virtual environment
    poetry shell
-   
+
    # Install pre-commit hooks
    pre-commit install
-   
+
    # Initialize DVC
    dvc init --no-scm
    ```
@@ -53,10 +53,10 @@ We use a Git flow branching model:
    ```bash
    # Run pre-commit checks
    pre-commit run --all-files
-   
+
    # Run tests
    pytest tests/ -v
-   
+
    # Check DVC pipeline
    dvc repro --force
    ```
@@ -135,7 +135,7 @@ ruff check --fix src/ tests/
 1. **Type Hints**: All functions must include type hints
    ```python
    def process_household_data(
-       data: pd.DataFrame, 
+       data: pd.DataFrame,
        resolution: str = "30min"
    ) -> pd.DataFrame:
        """Process household energy consumption data."""
@@ -145,18 +145,18 @@ ruff check --fix src/ tests/
 2. **Docstrings**: All public functions and classes must have docstrings
    ```python
    def train_forecasting_model(
-       data: np.ndarray, 
+       data: np.ndarray,
        config: ModelConfig
    ) -> ForecastingModel:
        """Train a forecasting model on household energy data.
-       
+
        Args:
            data: Training data with shape (n_samples, n_features)
            config: Model configuration including hyperparameters
-           
+
        Returns:
            Trained forecasting model ready for prediction
-           
+
        Raises:
            ValueError: If data is empty or config is invalid
        """
@@ -195,10 +195,10 @@ def test_forecast_accuracy_on_holiday_periods():
 with mlflow.start_run(run_name="selfplay_patchtst_ukdale_v1_42"):
     # Set reproducibility
     mlflow.log_param("random_seed", 42)
-    
+
     # Log configuration
     mlflow.log_dict(config.dict(), "config.yaml")
-    
+
     # Log model and metrics
     mlflow.pytorch.log_model(model, "best_model")
     mlflow.log_metrics(evaluation_metrics)
@@ -232,10 +232,10 @@ pytest tests/ -n auto
        # Arrange
        generator = EVSpikeGenerator(power_range=(3.5, 7.0))
        baseline_data = create_sample_household_data()
-       
+
        # Act
        scenario = generator.generate_scenario(baseline_data)
-       
+
        # Assert
        assert scenario.peak_power >= 3.5
        assert scenario.peak_power <= 7.0
@@ -279,22 +279,22 @@ def aggregate_households_to_feeder(
     transformer_capacity: float = 500.0
 ) -> np.ndarray:
     """Aggregate household forecasts into realistic distribution feeder load.
-    
+
     Applies diversity factors and transformer constraints to simulate
     realistic distribution network loading from household consumption.
-    
+
     Args:
         household_forecasts: List of individual household load forecasts
         diversity_factors: Mapping from household count to diversity factor
         transformer_capacity: Maximum transformer capacity in kVA
-        
+
     Returns:
         Aggregated feeder load profile respecting network constraints
-        
+
     Raises:
         ValueError: If household_forecasts is empty
         OverloadError: If aggregated load exceeds transformer capacity
-        
+
     Example:
         >>> forecasts = [np.random.rand(48) for _ in range(50)]
         >>> diversity = {50: 0.6}  # 50 households have 60% diversity

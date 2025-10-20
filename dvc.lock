@@ -1,8 +1,8 @@
 schema: '2.0'
 stages:
   prepare_ukdale:
-    cmd: mkdir -p data/raw/ukdale data/processed/ukdale_30min data/derived && 
-      echo "Preparing UK-DALE dataset..." && echo "ukdale_prepared" > 
+    cmd: mkdir -p data/raw/ukdale data/processed/ukdale_30min data/derived &&
+      echo "Preparing UK-DALE dataset..." && echo "ukdale_prepared" >
       data/derived/ukdale_ready.txt
     deps:
     - path: data/raw/ukdale
@@ -21,8 +21,8 @@ stages:
       size: 0
       nfiles: 0
   prepare_lcl:
-    cmd: mkdir -p data/raw/lcl data/processed/lcl_clean data/derived && echo 
-      "Preparing London Smart Meters (LCL) dataset..." && echo "lcl_prepared" > 
+    cmd: mkdir -p data/raw/lcl data/processed/lcl_clean data/derived && echo
+      "Preparing London Smart Meters (LCL) dataset..." && echo "lcl_prepared" >
       data/derived/lcl_ready.txt
     deps:
     - path: data/raw/lcl
@@ -42,7 +42,7 @@ stages:
       nfiles: 0
   prepare_ssen:
     cmd: mkdir -p data/raw/ssen data/processed/ssen_feeders data/derived && echo
-      "Preparing SSEN LV feeder data for validation..." && echo "ssen_prepared" 
+      "Preparing SSEN LV feeder data for validation..." && echo "ssen_prepared"
       > data/derived/ssen_ready.txt
     deps:
     - path: data/raw/ssen
@@ -61,8 +61,8 @@ stages:
       size: 0
       nfiles: 0
   feature_engineering:
-    cmd: mkdir -p data/processed/features data/derived && echo "Engineering 
-      features from processed datasets..." && echo "features_engineered" > 
+    cmd: mkdir -p data/processed/features data/derived && echo "Engineering
+      features from processed datasets..." && echo "features_engineered" >
       data/derived/features_ready.txt
     deps:
     - path: data/derived/lcl_ready.txt
@@ -94,8 +94,8 @@ stages:
       size: 0
       nfiles: 0
   train_baselines:
-    cmd: mkdir -p data/derived/models/baselines data/derived && echo "Training 
-      baseline forecasting models..." && echo "baselines_trained" > 
+    cmd: mkdir -p data/derived/models/baselines data/derived && echo "Training
+      baseline forecasting models..." && echo "baselines_trained" >
       data/derived/baselines_ready.txt
     deps:
     - path: data/derived/features_ready.txt
@@ -118,8 +118,8 @@ stages:
       size: 0
       nfiles: 0
   train_custom:
-    cmd: mkdir -p data/derived/models/custom data/derived && echo "Training 
-      custom neural architectures..." && echo "custom_trained" > 
+    cmd: mkdir -p data/derived/models/custom data/derived && echo "Training
+      custom neural architectures..." && echo "custom_trained" >
       data/derived/custom_ready.txt
     deps:
     - path: data/derived/features_ready.txt
@@ -142,8 +142,8 @@ stages:
       size: 0
       nfiles: 0
   train_selfplay:
-    cmd: mkdir -p data/derived/models/selfplay data/derived && echo "Training 
-      self-play propose→solve→verify system..." && echo "selfplay_trained" > 
+    cmd: mkdir -p data/derived/models/selfplay data/derived && echo "Training
+      self-play propose→solve→verify system..." && echo "selfplay_trained" >
       data/derived/selfplay_ready.txt
     deps:
     - path: data/derived/features_ready.txt
@@ -166,10 +166,10 @@ stages:
       md5: 75752cdea74871cef601c397bc321d12
       size: 17
   evaluate_models:
-    cmd: mkdir -p data/derived/evaluation data/derived/reports data/derived && 
-      echo "Evaluating all models and generating reports..." && touch 
-      data/derived/evaluation/forecast_accuracy.png && touch 
-      data/derived/evaluation/feeder_validation.png && echo 
+    cmd: mkdir -p data/derived/evaluation data/derived/reports data/derived &&
+      echo "Evaluating all models and generating reports..." && touch
+      data/derived/evaluation/forecast_accuracy.png && touch
+      data/derived/evaluation/feeder_validation.png && echo
       "evaluation_complete" > data/derived/evaluation_ready.txt
     deps:
     - path: data/derived/baselines_ready.txt

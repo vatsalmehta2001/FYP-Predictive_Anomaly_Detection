@@ -22,7 +22,7 @@ Describe any alternative solutions or features you've considered.
 ## Use Case
 Describe the specific use case(s) this feature would enable:
 - [ ] Data processing improvement
-- [ ] Model architecture enhancement  
+- [ ] Model architecture enhancement
 - [ ] Self-play training optimization
 - [ ] Evaluation/validation improvement
 - [ ] MLOps/infrastructure enhancement

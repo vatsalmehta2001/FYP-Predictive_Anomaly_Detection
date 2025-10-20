@@ -91,7 +91,7 @@ After downloading and placing datasets in their respective directories:
 ```bash
 # Track each dataset directory
 dvc add data/raw/ukdale
-dvc add data/raw/lcl  
+dvc add data/raw/lcl
 dvc add data/raw/ssen
 
 # This creates .dvc pointer files (tracked by Git)
@@ -127,7 +127,7 @@ dvc push
 ### London Smart Meters
 1. Download directly from London Datastore (no registration)
 2. Get `LCL-FullData.csv` or compressed version
-3. Extract to `data/raw/lcl/` as shown above  
+3. Extract to `data/raw/lcl/` as shown above
 4. Run `dvc add data/raw/lcl`
 
 ### SSEN Feeder Data
@@ -160,7 +160,7 @@ dvc push
 - **Network timeouts**: Download compressed versions when available
 - **Access denied**: Verify registration status and license compliance
 
-### DVC Issues  
+### DVC Issues
 - **"File not found"**: Ensure directories are non-empty before `dvc add`
 - **Git ignores .dvc files**: Check `.gitignore` has proper DVC exceptions
 - **Slow operations**: Large datasets take time; use `--force` for re-tracking

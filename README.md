@@ -17,30 +17,30 @@ This Final Year Project explores how self-play reinforcement learning can enhanc
 ```mermaid
 graph TB
     subgraph "Raw Data Sources"
-        A[UK-DALE<br/>Household Energy] 
+        A[UK-DALE<br/>Household Energy]
         B[London Smart Meters<br/>LCL Dataset]
         C[SSEN LV Feeder<br/>Distribution Network]
     end
-    
+
     subgraph "Processing Pipeline"
         D[Data Harmonization<br/>30-min resolution]
         E[Feature Engineering<br/>Weather, Calendar, Lags]
     end
-    
+
     subgraph "Self-Play Training"
         F[Proposer<br/>Scenario Generation]
         G[Solver<br/>TS Forecasting Model]
         H[Verifier<br/>Constraint Validation]
     end
-    
+
     subgraph "Validation & Evaluation"
         I[Pseudo-Feeder<br/>Aggregation]
         J[Distributional<br/>Comparison]
         K[Anomaly Case<br/>Studies]
     end
-    
+
     A --> D
-    B --> D  
+    B --> D
     D --> E
     E --> F
     F --> G
@@ -63,7 +63,7 @@ graph TB
 
 ## Project Status
 
-**Current Phase**: Data Ingestion & Exploration  
+**Current Phase**: Data Ingestion & Exploration
 **Next Milestone**: Self-Play Prototype Implementation
 
 <table>
@@ -159,7 +159,7 @@ ls data/samples/
 
 # 2. Track with DVC
 dvc add data/raw/ukdale
-dvc add data/raw/lcl  
+dvc add data/raw/lcl
 dvc add data/raw/ssen
 
 # 3. Commit pointers (not data!) to Git
@@ -172,8 +172,8 @@ dvc push
 ```
 
 **Dataset Locations:**
-- `data/raw/ukdale/` → UK-DALE household consumption 
-- `data/raw/lcl/` → London Smart Meters data   
+- `data/raw/ukdale/` → UK-DALE household consumption
+- `data/raw/lcl/` → London Smart Meters data
 - `data/raw/ssen/` → SSEN distribution feeder data
 - `data/samples/` → Tiny synthetic samples for demos/CI
 
@@ -213,7 +213,7 @@ python -m fyp.runner forecast --dataset ssen --horizon 96
 python -m fyp.runner forecast --dataset lcl --model-type patchtst --use-samples
 python -m fyp.runner anomaly --dataset ukdale --model-type autoencoder --use-samples
 
-# Note: Use canonical import path fyp.anomaly.autoencoder 
+# Note: Use canonical import path fyp.anomaly.autoencoder
 # (old path fyp.models.autoencoder still works but deprecated)
 ```
 

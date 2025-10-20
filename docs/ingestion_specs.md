@@ -99,7 +99,7 @@ python -m fyp.ingestion.cli lcl --use-samples
 - Duplicate timestamp detection and removal
 - Outlier identification (>3σ)
 
-**Entity ID Convention**: 
+**Entity ID Convention**:
 - Aggregate: `house_1`
 - Appliance: `house_1_dishwasher`
 
@@ -127,7 +127,7 @@ python -m fyp.ingestion.cli ukdale --no-downsample-30min
 
 ### SSEN
 
-**Source Format**: 
+**Source Format**:
 - CSV lookup: `LV_FEEDER_LOOKUP.csv` with feeder metadata
 - CKAN API: Time series data via paginated JSON responses
 
@@ -147,7 +147,7 @@ python -m fyp.ingestion.cli ukdale --no-downsample-30min
 ```json
 {
   "feeder_name": "Main Street Primary",
-  "substation": "WEST_SUB_01", 
+  "substation": "WEST_SUB_01",
   "postcode_sector": "EH1 2",
   "capacity_kva": 315.0,
   "source_uri": "api:resource_abc123",
@@ -225,7 +225,7 @@ ls data/processed/dataset=*/
 ### Common Issues
 
 **Timezone Errors**
-- Symptom: "Timestamp must be timezone-aware" 
+- Symptom: "Timestamp must be timezone-aware"
 - Fix: Source data may have naive timestamps; ingestion adds UK timezone
 
 **Memory Issues (UK-DALE)**
@@ -250,7 +250,7 @@ ls data/processed/dataset=*/
 
 ### Performance Tips
 
-1. **Chunked Processing**: 
+1. **Chunked Processing**:
    - LCL: 100k row chunks for large CSVs
    - UK-DALE: Streaming HDF5 reads to avoid memory issues
    - Parquet: 128MB row groups for optimal compression/query performance

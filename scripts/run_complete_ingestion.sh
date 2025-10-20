@@ -93,4 +93,3 @@ echo -e "${CYAN}Next steps:${NC}"
 echo -e "1. Run exploratory notebooks: jupyter notebook notebooks/"
 echo -e "2. Generate figures: Execute all cells in each notebook"
 echo -e "3. Start baseline models: python -m fyp.runner forecast --dataset lcl\n"
-

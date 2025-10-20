@@ -127,7 +127,7 @@ plots:
       x: horizon_hours
       y: mae
       title: "Forecasting Accuracy by Horizon"
-      
+
   - data/derived/evaluation/feeder_validation.png:
       template: plots_template.html
       x: method

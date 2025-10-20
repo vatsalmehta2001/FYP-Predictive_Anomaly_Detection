@@ -8,7 +8,7 @@ This guide explains how to add, track, and manage raw datasets using DVC (Data V
 ```bash
 # Download/copy your dataset to the appropriate location:
 # data/raw/ukdale/     - UK household consumption data
-# data/raw/lcl/        - London Smart Meters data  
+# data/raw/lcl/        - London Smart Meters data
 # data/raw/ssen/       - SSEN distribution feeder data
 ```
 
@@ -123,7 +123,7 @@ dvc list . data/raw/
 ### Q: Why not commit data directly to Git?
 **A:** Git is optimized for text files and code. Large binary datasets would:
 - Make the repository massive and slow
-- Bloat history with every data change  
+- Bloat history with every data change
 - Exceed GitHub/GitLab file size limits
 - Make cloning extremely slow
 
@@ -157,7 +157,7 @@ pytest tests/  # Uses data/samples/
 ### Q: Can I use DVC without remote storage?
 **A:** Yes! DVC works locally. Remote storage is optional but recommended for:
 - Team collaboration
-- Backup and disaster recovery  
+- Backup and disaster recovery
 - Sharing large datasets across machines
 
 ### Q: What if `dvc add` fails?
@@ -199,7 +199,7 @@ rm -rf data/raw/dataset/
 
 ### Remote Storage Options
 - **S3**: Best for AWS-based workflows
-- **Azure Blob**: Good for Azure environments  
+- **Azure Blob**: Good for Azure environments
 - **Google Cloud Storage**: For GCP deployments
 - **SSH/NFS**: For shared filesystem access
 

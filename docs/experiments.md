@@ -13,7 +13,7 @@ Traditional forecasting approaches for comparison and validation.
 
 **Sub-categories:**
 - `baseline/statistical` - Classical time series methods (ARIMA, ETS, STL)
-- `baseline/ml` - Traditional ML approaches (Random Forest, XGBoost, SVR)  
+- `baseline/ml` - Traditional ML approaches (Random Forest, XGBoost, SVR)
 - `baseline/dl` - Standard deep learning models (LSTM, GRU, Transformer)
 - `baseline/pretrained` - Large pre-trained models (TimeGPT, Lag-Llama)
 
@@ -56,7 +56,7 @@ Systematic component analysis and sensitivity studies.
 
 **Sub-categories:**
 - `ablation/architecture` - Model component importance
-- `ablation/features` - Feature contribution analysis  
+- `ablation/features` - Feature contribution analysis
 - `ablation/hyperparams` - Hyperparameter sensitivity
 - `ablation/rewards` - Self-play reward function components
 
@@ -114,7 +114,7 @@ Every experiment run must log the following artifacts:
 ```python
 # Log all configuration
 mlflow.log_dict(config, "config.yaml")
-mlflow.log_dict(model_params, "model_config.yaml") 
+mlflow.log_dict(model_params, "model_config.yaml")
 mlflow.log_dict(data_params, "data_config.yaml")
 ```
 
@@ -130,7 +130,7 @@ mlflow.log_artifact("model_checkpoint.pth")
 # Core metrics (logged every epoch)
 mlflow.log_metrics({
     "mae_validation": mae_val,
-    "mape_validation": mape_val, 
+    "mape_validation": mape_val,
     "rmse_validation": rmse_val,
     "pinball_loss": pinball_loss,  # for quantile models
     "coverage_80": coverage_80,    # for uncertainty quantification
@@ -180,17 +180,17 @@ CORE_METRICS = {
     "mape": mean_absolute_percentage_error,
     "rmse": root_mean_squared_error,
     "smape": symmetric_mean_absolute_percentage_error,
-    
+
     # Distribution accuracy (for uncertainty models)
     "pinball_loss_10": lambda y, q: pinball_loss(y, q, 0.1),
     "pinball_loss_50": lambda y, q: pinball_loss(y, q, 0.5),
     "pinball_loss_90": lambda y, q: pinball_loss(y, q, 0.9),
-    
+
     # Coverage metrics
     "coverage_50": lambda y, q_low, q_high: coverage_score(y, q_low, q_high),
     "coverage_80": lambda y, q_low, q_high: coverage_score(y, q_low, q_high),
     "coverage_95": lambda y, q_low, q_high: coverage_score(y, q_low, q_high),
-    
+
     # Energy-specific metrics
     "peak_mae": peak_mean_absolute_error,      # Error during peak hours
     "daily_energy_mape": daily_energy_mape,    # Daily total energy accuracy
@@ -205,13 +205,13 @@ SELFPLAY_METRICS = {
     "scenario_diversity": scenario_diversity_score,
     "scenario_realism": physics_constraint_score,
     "scenario_difficulty": solver_error_distribution,
-    
+
     # Solver improvement
     "solve_rate": proportion_scenarios_solved,
     "improvement_rate": accuracy_improvement_per_episode,
     "generalization": cross_scenario_performance,
-    
-    # Verifier accuracy  
+
+    # Verifier accuracy
     "constraint_precision": constraint_violation_detection,
     "reward_correlation": reward_ground_truth_correlation,
     "false_positive_rate": invalid_scenario_acceptance,
@@ -225,12 +225,12 @@ FEEDER_METRICS = {
     "ks_statistic": kolmogorov_smirnov_test,
     "wasserstein_distance": wasserstein_distance,
     "jensen_shannon_divergence": js_divergence,
-    
+
     # Peak load analysis
     "peak_bias": mean_peak_load_difference,
     "peak_correlation": peak_time_correlation,
     "load_factor_error": load_factor_comparison,
-    
+
     # Temporal pattern matching
     "daily_profile_similarity": daily_profile_correlation,
     "seasonal_pattern_match": seasonal_decomposition_similarity,
@@ -262,7 +262,7 @@ with mlflow.start_run(run_name="selfplay_full_v1_0_seed42"):
         # Training step
         metrics = train_episode()
         mlflow.log_metrics(metrics, step=episode)
-        
+
         # Periodic checkpointing
         if episode % 100 == 0:
             mlflow.pytorch.log_model(model, f"checkpoint_ep{episode}")

@@ -5,8 +5,8 @@ import sys
 from pathlib import Path
 
 from .lcl_ingestor import LCLIngestor
-from .ukdale_ingestor import UKDALEIngestor
 from .ssen_ingestor import SSENIngestor
+from .ukdale_ingestor import UKDALEIngestor
 
 
 def main():
@@ -18,18 +18,18 @@ def main():
 Examples:
   # Ingest LCL data using samples
   python -m fyp.ingestion.cli lcl --use-samples
-  
+
   # Ingest UK-DALE with downsampling
   python -m fyp.ingestion.cli ukdale --downsample-30min
-  
+
   # Ingest SSEN from API (requires network)
   python -m fyp.ingestion.cli ssen
-  
+
   # Dry run to see what would happen
   python -m fyp.ingestion.cli lcl --dry-run
 """,
     )
-    
+
     # Common arguments
     parser.add_argument(
         "dataset",
@@ -58,7 +58,7 @@ Examples:
         action="store_true",
         help="Run without writing output",
     )
-    
+
     # Dataset-specific arguments
     parser.add_argument(
         "--downsample-30min",
@@ -80,9 +80,9 @@ Examples:
         action="store_true",
         help="Force refresh of cached API responses (SSEN only)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Create appropriate ingestor
     if args.dataset == "lcl":
         ingestor = LCLIngestor(
@@ -112,7 +112,7 @@ Examples:
     else:
         parser.error(f"Unknown dataset: {args.dataset}")
         sys.exit(1)
-    
+
     try:
         ingestor.run()
     except Exception as e:

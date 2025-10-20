@@ -8,7 +8,7 @@ Traditional supervised learning for time series forecasting relies on historical
 
 ### Core Philosophy
 - **Proposer**: Generate diverse, challenging consumption scenarios
-- **Solver**: Develop robust forecasting capabilities across scenarios  
+- **Solver**: Develop robust forecasting capabilities across scenarios
 - **Verifier**: Ensure physical plausibility and reward realistic solutions
 - **Self-Improvement**: Iterative refinement through verifiable feedback
 
@@ -22,21 +22,21 @@ graph TB
         C --> D[Reward Signal]
         D --> A
         D --> B
-        
+
         E[Historical Data] --> A
         E --> B
         F[Physics Constraints] --> C
         G[SSEN Validation] --> C
     end
-    
+
     subgraph "Scenario Types"
         H[EV Charging Spikes]
-        I[Cold Snap Uplift]  
+        I[Cold Snap Uplift]
         J[Evening Peak Shifts]
         K[Equipment Outages]
         L[Missing Data Events]
     end
-    
+
     H --> A
     I --> A
     J --> A
@@ -59,7 +59,7 @@ class EVSpike:
     duration_range: (1, 8)    # hours
     timing_probs: {
         "evening_peak": 0.6,   # 18:00-22:00
-        "overnight": 0.3,      # 00:00-06:00  
+        "overnight": 0.3,      # 00:00-06:00
         "random": 0.1
     }
     seasonal_modifier: winter_boost * 1.2  # heating + charging
@@ -108,7 +108,7 @@ class MissingnessEvent:
 
 ### Proposer Training Objectives
 1. **Diversity**: Generate scenarios spanning the full realistic parameter space
-2. **Difficulty**: Create challenging cases that expose solver weaknesses  
+2. **Difficulty**: Create challenging cases that expose solver weaknesses
 3. **Realism**: Maintain physical and behavioral plausibility
 4. **Novelty**: Avoid repetitive or trivial scenario generation
 
@@ -120,11 +120,11 @@ class ScenarioProposal:
     parameters: Dict[str, float]    # Scenario-specific parameters
     temporal_context: Dict          # Time of year, weather, etc.
     uncertainty_level: float        # Proposed difficulty level
-    
+
     def apply_to_timeseries(self, baseline: np.ndarray) -> np.ndarray:
         """Apply scenario transformation to baseline consumption."""
         pass
-    
+
     def get_verification_constraints(self) -> List[Constraint]:
         """Return physics constraints this scenario must satisfy."""
         pass
@@ -147,24 +147,24 @@ The solver can use any time series forecasting architecture:
 class SolverTraining:
     def train_episode(self, proposed_scenario, historical_context):
         """Train on mix of historical data and proposed scenarios."""
-        
+
         # 1. Get scenario from proposer
         scenario = self.proposer.generate_scenario()
-        
+
         # 2. Apply scenario to create training target
         modified_timeseries = scenario.apply_to_timeseries(historical_context)
-        
+
         # 3. Train forecasting model
         forecast = self.solver_model.predict(context_window)
         loss = self.compute_loss(forecast, modified_timeseries)
-        
+
         # 4. Get verification feedback
         verification_score = self.verifier.evaluate(forecast, scenario)
-        
+
         # 5. Update model with combined loss
         total_loss = loss + self.alpha * verification_score
         self.solver_model.update(total_loss)
-        
+
         return forecast, verification_score
 ```
 
@@ -197,7 +197,7 @@ class RampRateConstraint:
     """Realistic limits on consumption change rates."""
     def __init__(self):
         self.max_ramp_30min = 2.0  # kW per 30-minute period
-        
+
     def evaluate(self, forecast: np.ndarray) -> float:
         ramp_rates = np.diff(forecast) / 0.5  # per 30-min
         violations = np.sum(np.abs(ramp_rates) > self.max_ramp_30min)
@@ -211,7 +211,7 @@ class EnergyBudgetConstraint:
     """Daily/weekly energy totals must be realistic."""
     def __init__(self, historical_percentiles):
         self.daily_energy_bounds = historical_percentiles  # [p5, p95]
-        
+
     def evaluate(self, forecast: np.ndarray) -> float:
         daily_energy = self.aggregate_to_daily(forecast)
         in_bounds = np.logical_and(
@@ -230,7 +230,7 @@ class TemporalPatternConstraint:
         self.weekday_model = pattern_models['weekday']
         self.weekend_model = pattern_models['weekend']
         self.holiday_model = pattern_models['holiday']
-        
+
     def evaluate(self, forecast: np.ndarray, temporal_context: Dict) -> float:
         expected_pattern = self.get_expected_pattern(temporal_context)
         pattern_similarity = self.compute_similarity(forecast, expected_pattern)
@@ -244,12 +244,12 @@ class FeederBoundsConstraint:
     def __init__(self, ssen_statistics):
         self.feeder_load_bounds = ssen_statistics['load_bounds']
         self.feeder_diversity_factors = ssen_statistics['diversity']
-        
+
     def evaluate(self, aggregated_forecast: np.ndarray) -> float:
         # Compare statistical properties with SSEN feeder data
         load_factor = self.compute_load_factor(aggregated_forecast)
         diversity_factor = self.compute_diversity_factor(aggregated_forecast)
-        
+
         realism_score = self.compare_with_ssen_statistics(
             load_factor, diversity_factor
         )
@@ -262,26 +262,26 @@ class CompositeVerifier:
     def __init__(self, constraint_weights):
         self.constraints = [
             NonNegativityConstraint(),
-            RampRateConstraint(), 
+            RampRateConstraint(),
             EnergyBudgetConstraint(),
             TemporalPatternConstraint(),
             FeederBoundsConstraint()
         ]
         self.weights = constraint_weights
-        
+
     def evaluate(self, forecast: np.ndarray, scenario: ScenarioProposal) -> float:
         """Compute weighted combination of constraint scores."""
         scores = []
         for constraint in self.constraints:
             score = constraint.evaluate(forecast, scenario.temporal_context)
             scores.append(score)
-            
+
         # Weighted combination
         total_score = np.sum([w * s for w, s in zip(self.weights, scores)])
-        
+
         # Optional: Apply scenario difficulty modifier
         difficulty_bonus = scenario.uncertainty_level * self.difficulty_weight
-        
+
         return total_score + difficulty_bonus
 ```
 
@@ -292,38 +292,38 @@ class CompositeVerifier:
 class SelfPlayTrainer:
     def __init__(self, proposer, solver, verifier):
         self.proposer = proposer
-        self.solver = solver  
+        self.solver = solver
         self.verifier = verifier
-        
+
     def train_episode(self):
         """Single episode of propose→solve→verify training."""
-        
+
         # 1. PROPOSE: Generate challenging scenario
         scenario = self.proposer.generate_scenario()
-        
-        # 2. SOLVE: Forecast under the proposed scenario  
+
+        # 2. SOLVE: Forecast under the proposed scenario
         context = self.get_historical_context()
         forecast = self.solver.predict(context, scenario)
-        
+
         # 3. VERIFY: Evaluate forecast plausibility
         verification_score = self.verifier.evaluate(forecast, scenario)
-        
+
         # 4. UPDATE: Improve based on verification feedback
         self.update_proposer(scenario, verification_score)
         self.update_solver(forecast, verification_score)
-        
+
         return {
             'scenario': scenario,
-            'forecast': forecast, 
+            'forecast': forecast,
             'verification_score': verification_score
         }
-        
+
     def train(self, num_episodes):
         """Full self-play training process."""
         for episode in range(num_episodes):
             results = self.train_episode()
             self.log_episode_results(episode, results)
-            
+
             # Periodic evaluation against historical data
             if episode % 100 == 0:
                 self.evaluate_on_test_set()
@@ -336,7 +336,7 @@ class SelfPlayTrainer:
 - **Solution**: Physics constraints provide abundant supervision signal
 - **Benefit**: Learn from unlabeled scenarios through constraint satisfaction
 
-#### 2. Distribution Shift Robustness  
+#### 2. Distribution Shift Robustness
 - **Problem**: Historical patterns may not generalize to future scenarios
 - **Solution**: Self-generated scenarios test model robustness
 - **Benefit**: Better performance on novel consumption patterns
@@ -397,7 +397,7 @@ class SelfPlayTrainer:
 - Create simple scenario generation (EV spikes only)
 - Establish training loop infrastructure
 
-### Phase 2: Core Development (Weeks 5-8)  
+### Phase 2: Core Development (Weeks 5-8)
 - Expand scenario types (all 5 categories)
 - Implement advanced solver architectures (PatchTST, N-BEATS)
 - Develop comprehensive constraint evaluation
@@ -405,7 +405,7 @@ class SelfPlayTrainer:
 
 ### Phase 3: Integration & Evaluation (Weeks 9-12)
 - Full system integration and testing
-- Validation against SSEN feeder data  
+- Validation against SSEN feeder data
 - Comparison with baseline forecasting methods
 - Performance analysis and optimization
 

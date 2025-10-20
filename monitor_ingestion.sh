@@ -34,7 +34,7 @@ if lcl_dir.exists():
     files = list(lcl_dir.glob("*.parquet"))
     df = pl.scan_parquet(str(lcl_dir / "*.parquet"))
     total = df.select(pl.len()).collect().item()
-    
+
     # Get log count
     with open("lcl_ingestion_final.log") as f:
         for line in reversed(f.readlines()):
@@ -44,14 +44,14 @@ if lcl_dir.exists():
                     break
                 except:
                     pass
-    
+
     progress_pct = (processed / 167_932_474) * 100
-    
+
     print(f"Files: {len(files):,}")
     print(f"Log: {processed:,} records ({progress_pct:.1f}%)")
     print(f"Disk: {total:,} records")
     print(f"Match: {total/processed:.6f}x")
-    
+
     if 0.999 < (total/processed) < 1.001:
         print("Status: ✅ PERFECT MATCH")
     else:
@@ -65,4 +65,3 @@ echo "=========================================="
 echo "Press Ctrl+C to exit"
 echo "Run: ./monitor_ingestion.sh"
 echo "=========================================="
-

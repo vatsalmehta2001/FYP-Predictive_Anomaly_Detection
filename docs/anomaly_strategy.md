@@ -27,7 +27,7 @@ Anomalies that **violate physical network constraints**:
 1. **Voltage violations**: Outside 207-253V (UK statutory ±10%)
 2. **Capacity violations**: Load exceeds transformer rating
 3. **Power factor violations**: Outside 0.8-1.0 range
-4. **Impossible patterns**: 
+4. **Impossible patterns**:
    - Negative consumption
    - Zero consumption for >48 hours (occupied household)
    - Instantaneous load >100kW (typical household max ~10-15kW)
@@ -67,11 +67,11 @@ The self-play verifier learns what consumption patterns are "plausible" given:
 - SSEN network constraints
 - Cross-household patterns
 
-**Proposer** generates consumption scenarios →  
-**Solver** forecasts or detects →  
+**Proposer** generates consumption scenarios →
+**Solver** forecasts or detects →
 **Verifier** scores based on:
 - Physics constraints (Tier 1)
-- Statistical likelihood (Tier 2)  
+- Statistical likelihood (Tier 2)
 - Learned plausibility (updated through self-play)
 
 ## Evaluation Strategy
@@ -221,7 +221,6 @@ Since we have no labeled anomalies, we employ:
 - UK Electrical Safety Standards BS 7671:2018
 
 ---
-*Last updated: 2025-10-18*  
-*Author: Vatsal Mehta*  
+*Last updated: 2025-10-18*
+*Author: Vatsal Mehta*
 *Project: FYP - Predictive Anomaly Detection using Self-Play RL*
-

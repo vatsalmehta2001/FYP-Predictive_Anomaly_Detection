@@ -9,7 +9,7 @@ This document outlines the data management policies, version control strategies,
 data/
 ├── raw/              # Original, immutable datasets (gitignored, DVC tracked)
 │   ├── ukdale/       # UK-DALE household consumption data
-│   ├── lcl/          # London Smart Meters data  
+│   ├── lcl/          # London Smart Meters data
 │   └── ssen/         # SSEN LV feeder data (validation only)
 ├── processed/        # Cleaned and harmonized data (DVC tracked)
 │   ├── ukdale_30min/ # UK-DALE resampled to 30-minute intervals
@@ -47,7 +47,7 @@ data/
     url = s3://fyp-energy-data/
     # credentials will be handled via environment variables
 
-['remote "azureremote"']  
+['remote "azureremote"']
     url = azure://fypdata/datasets/
     # credentials handled via service principal
 ```
@@ -90,7 +90,7 @@ export AWS_ACCESS_KEY_ID=your_access_key
 export AWS_SECRET_ACCESS_KEY=your_secret_key
 ```
 
-#### Azure Blob Storage Configuration  
+#### Azure Blob Storage Configuration
 ```bash
 # Set up Azure remote (admin only)
 dvc remote add azureremote azure://fypdata/datasets/
@@ -125,7 +125,7 @@ dataset:
   resolution: "6-second intervals"
   size_mb: 1250
   checksum_md5: "a1b2c3d4e5f6..."
-  
+
 provenance:
   acquired_date: "2024-09-15"
   acquired_by: "project_admin"

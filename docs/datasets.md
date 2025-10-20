@@ -140,7 +140,7 @@ For development, testing, and CI purposes, this project includes tiny synthetic 
 ```
 data/samples/
 ├── lcl_sample.csv      # London Smart Meters sample (48 rows, ~2KB)
-├── ukdale_sample.csv   # UK-DALE sample (48 rows, ~2KB) 
+├── ukdale_sample.csv   # UK-DALE sample (48 rows, ~2KB)
 └── ssen_sample.csv     # SSEN feeder sample (48 rows, ~2KB)
 ```
 

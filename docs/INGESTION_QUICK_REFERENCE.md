@@ -216,4 +216,3 @@ Given the current situation (LCL at 91%, stuck process):
    python scripts/cleanup_and_verify.py --check-only
    pytest tests/test_ingestion_complete.py -v
    ```
-

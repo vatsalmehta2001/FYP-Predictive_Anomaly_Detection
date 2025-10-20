@@ -135,7 +135,7 @@ Weighted combination of detectors for robust anomaly scoring.
 # Forecasting baselines on sample data
 python -m fyp.runner forecast --dataset lcl --use-samples
 
-# Anomaly detection on real data  
+# Anomaly detection on real data
 python -m fyp.runner anomaly --dataset ukdale
 
 # Custom parameters
@@ -163,12 +163,12 @@ detectors = create_default_detectors()
 # Use models
 for window in windows[:5]:
     history = window["history_energy"]
-    
+
     # Forecasting
     for name, forecaster in forecasters.items():
         forecaster.fit(history)
         forecast = forecaster.predict(history, steps=48)
-    
+
     # Anomaly detection
     for name, detector in detectors.items():
         detector.fit(history)
@@ -184,7 +184,7 @@ dvc repro train_baselines
 # Check outputs
 ls data/derived/evaluation/
 # forecast_metrics.csv
-# anomaly_metrics.csv  
+# anomaly_metrics.csv
 # forecast_mae_by_model.png
 # anomaly_precision_recall.png
 ```
@@ -317,7 +317,7 @@ Lightweight autoencoder for reconstruction-based anomaly detection.
 # Modern anomaly detection
 python -m fyp.runner anomaly --dataset ssen --model-type autoencoder --use-samples
 
-# Production anomaly detection  
+# Production anomaly detection
 python -m fyp.runner anomaly --dataset ukdale --model-type autoencoder
 
 # Programmatic usage (canonical import)
