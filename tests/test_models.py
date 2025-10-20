@@ -81,7 +81,8 @@ def create_forecasting_windows_synthetic(n_windows: int = 5) -> list[dict]:
 
 
 @pytest.mark.skipif(
-    not torch.cuda.is_available() and os.getenv("CI"), reason="Skip GPU tests in CI"
+    os.getenv("CI") is not None and not torch.cuda.is_available(),
+    reason="Skip GPU tests in CI without GPU",
 )
 class TestPatchTST:
     """Test PatchTST forecasting model."""
