@@ -22,8 +22,7 @@ stages:
     - data/samples/ukdale_sample.csv
     outs:
     - data/processed/ukdale_data
-    - data/ukdale_30min
-    desc: "Ingest UK-DALE data with optional 30-min downsampling"
+    desc: "Ingest UK-DALE data with optional 30-min downsampling (inline)"
     params:
     - use_samples
     - downsample_30min
