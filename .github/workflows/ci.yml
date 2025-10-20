@@ -67,7 +67,7 @@ jobs:
 
       - name: Initialize DVC if needed
         run: |
-          if [ ! -d .dvc/cache ]; then
+          if [ ! -d .dvc ]; then
             poetry run dvc init --no-scm
           fi
 
