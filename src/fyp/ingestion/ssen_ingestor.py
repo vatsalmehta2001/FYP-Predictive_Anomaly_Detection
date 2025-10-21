@@ -108,12 +108,15 @@ class SSENIngestor(BaseIngestor):
             lookup_path = self.input_root / "ssen" / "LV_FEEDER_LOOKUP.csv"
 
         if not lookup_path.exists():
-            self.logger.error(
+            self.logger.warning(
                 "No SSEN feeder lookup file found. Tried:\n"
                 "  - ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_21_2025.csv\n"
                 "  - ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_20_2025.csv\n"
-                "  - LV_FEEDER_LOOKUP.csv"
+                "  - LV_FEEDER_LOOKUP.csv\n"
+                "Continuing without metadata enrichment."
             )
+            # Initialize empty dict to avoid KeyErrors later
+            self.feeder_metadata_dict = {}
             return pd.DataFrame()
 
         self.logger.info(f"Loading SSEN feeder metadata from: {lookup_path.name}")
@@ -132,14 +135,16 @@ class SSENIngestor(BaseIngestor):
 
         # Create fast lookup dictionary for metadata enrichment
         # This avoids scanning the entire DataFrame for each record
-        if "lv_feeder_id" in df.columns:
-            self.feeder_metadata_dict = {}
+        self.feeder_metadata_dict = {}
+        if "lv_feeder_id" in df.columns and len(df) > 0:
             for _, row in df.iterrows():
                 feeder_id = str(row["lv_feeder_id"]).strip()
                 self.feeder_metadata_dict[feeder_id] = row.to_dict()
             self.logger.info(
                 f"Created fast lookup index for {len(self.feeder_metadata_dict):,} feeders"
             )
+        else:
+            self.logger.debug("No feeder metadata to index")
 
         return df
 
@@ -227,14 +232,16 @@ class SSENIngestor(BaseIngestor):
             Iterator of consumption records (if time-series available) or
             empty iterator with metadata saved to parquet (if metadata-only)
         """
-        # Always load feeder lookup for metadata enrichment
-        self.feeder_lookup = self._load_feeder_lookup()
-
         if self.use_samples:
-            # Use sample data for testing/CI
-            self.logger.info("Using sample data mode")
+            # Use sample data for testing/CI (no metadata enrichment needed)
+            self.logger.info("Using sample data mode (no metadata enrichment)")
+            self.feeder_lookup = pd.DataFrame()
+            self.feeder_metadata_dict = {}
             yield from self._read_sample_data()
             return
+
+        # Load feeder lookup for metadata enrichment (full data mode only)
+        self.feeder_lookup = self._load_feeder_lookup()
 
         # Check for time-series consumption data
         timeseries_path = (
@@ -264,20 +271,54 @@ class SSENIngestor(BaseIngestor):
             yield from self._read_metadata_only()
 
     def _read_sample_data(self) -> Iterator[dict[str, Any]]:
-        """Read sample CSV data."""
+        """Read sample CSV data in production SSEN format."""
         sample_path = Path("data/samples/ssen_sample.csv")
 
         if not sample_path.exists():
             raise FileNotFoundError(f"Sample file not found: {sample_path}")
 
         df = pd.read_csv(sample_path)
+
+        # Sample file is in production SSEN format, so convert column names
         for _, row in df.iterrows():
-            yield {
-                "feeder_id": row["feeder_id"],
-                "timestamp": pd.to_datetime(row["timestamp"]),
-                "wh_30m": float(row["wh_30m"]),
-                "source": sample_path.name,
-            }
+            # Use production column names
+            if (
+                pd.notna(row.get("lv_feeder_id"))
+                and pd.notna(row.get("data_collection_log_timestamp"))
+                and pd.notna(row.get("total_consumption_active_import"))
+            ):
+                yield {
+                    "feeder_id": str(row["lv_feeder_id"]).strip(),
+                    "timestamp": pd.to_datetime(row["data_collection_log_timestamp"]),
+                    "wh_30m": float(row["total_consumption_active_import"]),
+                    "device_count": float(
+                        row.get("aggregated_device_count_active", None)
+                    )
+                    if pd.notna(row.get("aggregated_device_count_active"))
+                    else None,
+                    "reactive_wh": float(
+                        row.get("total_consumption_reactive_import", None)
+                    )
+                    if pd.notna(row.get("total_consumption_reactive_import"))
+                    else None,
+                    "primary_consumption": float(
+                        row.get("primary_consumption_active_import", None)
+                    )
+                    if pd.notna(row.get("primary_consumption_active_import"))
+                    else None,
+                    "secondary_consumption": float(
+                        row.get("secondary_consumption_active_import", None)
+                    )
+                    if pd.notna(row.get("secondary_consumption_active_import"))
+                    else None,
+                    "dno_name": str(row.get("dno_name", "SSEN")),
+                    "secondary_substation_id": str(
+                        row.get("secondary_substation_id", None)
+                    )
+                    if pd.notna(row.get("secondary_substation_id"))
+                    else None,
+                    "source": sample_path.name,
+                }
 
     def _read_api_data(self) -> Iterator[dict[str, Any]]:
         """Read data from CKAN API."""
