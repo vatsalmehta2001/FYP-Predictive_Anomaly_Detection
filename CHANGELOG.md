@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-10-21
+
+### Added
+- **SSEN Real-World Time-Series Data**: Integrated actual operational distribution network consumption data
+  - 100,000 LV feeder metadata records with complete network hierarchy
+  - 100,000 half-hourly consumption readings from 28 unique operational feeders
+  - Comprehensive metadata enrichment (14 fields) including customer counts (total_mpan_count)
+  - Network hierarchy: primary/secondary substations, HV/LV feeder relationships, postcodes
+  - Primary/secondary consumption breakdown and reactive power measurements
+- **Performance Optimizations**: 45x speedup in SSEN ingestion (4 seconds for 100K records)
+  - Dictionary-based metadata lookup (O(1) instead of O(n) DataFrame scans)
+  - Vectorized pandas validation (filter entire chunks, not row-by-row)
+  - Timestamp conversion per chunk (not per row)
+- **Real Production Sample Data**: Updated `data/samples/ssen_sample.csv` with 30 real records from production CSV
+
+### Changed
+- **SSEN Ingestor**: Complete rewrite to process CSV time-series instead of CKAN API
+  - Direct CSV reading with chunked processing (10K rows/batch)
+  - Metadata enrichment during ingestion (not post-processing)
+  - Ingestion version upgraded to `v2.1_timeseries`
+- **Documentation Updates**:
+  - `docs/datasets.md`: SSEN section rewritten to highlight real-world validation capabilities
+  - `docs/ingestion_specs.md`: New SSEN time-series section with performance details
+  - `docs/download_links.md`: Updated with both SSEN CSV download instructions
+  - `README.md`: Added "Real-World Grid Validation" to USP, updated datasets table
+
+### Fixed
+- **Data Quality**: 99.97% valid record rate (only 33 skipped due to missing consumption values)
+- **Metadata Enrichment**: All consumption records enhanced with feeder characteristics and customer counts
+
+### Technical Details
+- **Processing Speed**: 100K records in 4 seconds (vs 3+ minutes with previous approach)
+- **Memory Efficiency**: 10K row chunks with vectorized validation
+- **Data Quality Tracking**: Detailed logging of skipped records by reason
+- **Output Format**: Unified Parquet schema with 14 enriched metadata fields
+- **Source Files**:
+  - `ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_21_2025.csv` (metadata)
+  - `ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv` (time-series)
+
+---
+
 ## [0.2.0] - 2025-09-24
 
 ### Added

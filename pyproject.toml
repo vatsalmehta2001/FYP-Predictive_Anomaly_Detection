@@ -4,8 +4,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "fyp-energy-forecasting"
-version = "0.2.0"
-description = "AZR-inspired Energy Forecasting & Anomaly Detection for UK households with feeder validation"
+version = "0.2.1"
+description = "AZR-inspired Energy Forecasting & Anomaly Detection for UK households with real-world feeder validation"
 authors = ["Vatsal Mehta <vatsalmehta@aston.ac.uk>"]
 readme = "README.md"
 packages = [{include = "fyp", from = "src"}]

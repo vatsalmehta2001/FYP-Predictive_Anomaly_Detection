@@ -125,50 +125,69 @@ python -m fyp.ingestion.cli ukdale --downsample-30min
 python -m fyp.ingestion.cli ukdale --no-downsample-30min
 ```
 
-### SSEN
+### SSEN (Time-Series Consumption Data)
 
 **Source Format**:
-- CSV lookup: `LV_FEEDER_LOOKUP.csv` with feeder metadata
-- CKAN API: Time series data via paginated JSON responses
+- CSV metadata: `ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_21_2025.csv` (100K feeders)
+- CSV time-series: `ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv` (100K consumption records)
 
-**API Robustness**:
-- Rate limiting with exponential backoff (429/5xx errors)
-- HTTP response caching with ETag/Last-Modified support
-- Automatic retry on transient failures (max 3 attempts)
-- On-disk cache keyed by URL+headers for DVC idempotency
+**Processing Strategy**:
+1. Load metadata lookup into fast dictionary (O(1) enrichment)
+2. Read consumption CSV in 10K row chunks (memory-efficient)
+3. Vectorized validation (filter missing fields in batch)
+4. Enrich each record with feeder metadata (network hierarchy, customer counts)
+5. Write to unified Parquet schema with 14 enriched fields
+
+**Performance Optimizations**:
+- Dictionary lookup instead of DataFrame scanning (45x speedup)
+- Vectorized pandas operations for validation
+- Timestamp conversion once per chunk (not per row)
+- Processing speed: 4 seconds for 100K records
 
 **Quality Assurance**:
-- Resource ID tracking for API provenance
-- HTTP cache timestamps and ETags
-- Response validation and error logging
-- Feeder metadata enrichment from lookup CSV
+- Vectorized validation for required fields (lv_feeder_id, timestamp, consumption)
+- Skipped records logged with detailed counts
+- Metadata enrichment success tracking
+- Data quality: 99.97% valid records (33 skipped due to missing consumption)
 
 **Enhanced Extras**:
 ```json
 {
-  "feeder_name": "Main Street Primary",
-  "substation": "WEST_SUB_01",
-  "postcode_sector": "EH1 2",
-  "capacity_kva": 315.0,
-  "source_uri": "api:resource_abc123",
-  "resource_id": "abc123",
-  "retrieved_at": "2023-01-01T12:00:00Z",
-  "ingestion_version": "v2.0"
+  "source_file": "ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv",
+  "ingestion_version": "v2.1_timeseries",
+  "device_count": 61,
+  "reactive_kwh": 0.339,
+  "primary_consumption_kwh": 6.64,
+  "secondary_consumption_kwh": null,
+  "dno_name": "Scottish and Southern Electricity Networks",
+  "secondary_substation_id": "050",
+  "lv_feeder_name": "ANSON DRIVE",
+  "total_mpan_count": 152.0,
+  "postcode": "EH11 3NF",
+  "primary_substation_id": "64070",
+  "primary_substation_name": "Gorgie",
+  "secondary_substation_name": "ANSON DRIVE",
+  "hv_feeder_id": "05",
+  "hv_feeder_name": "Gorgie 05"
 }
 ```
 
-**API Configuration**:
+**CLI Usage**:
 ```bash
-# Environment variables
-export SSEN_CKAN_URL="https://data.ssen.co.uk"
-export SSEN_API_KEY="your-api-key"  # Optional
+# Full time-series ingestion (100K records, ~4 seconds)
+python -m fyp.ingestion.cli ssen --input-root data/raw --output-root data/processed
 
-# CLI usage with caching
-python -m fyp.ingestion.cli ssen --ckan-url $SSEN_CKAN_URL
-
-# Force refresh cached responses
-python -m fyp.ingestion.cli ssen --force-refresh
+# Sample-based testing (30 real records)
+python -m fyp.ingestion.cli ssen --use-samples
 ```
+
+**Data Fields Preserved**:
+- **Consumption**: total_consumption_active_import (Wh), reactive power (Wh)
+- **Device Counts**: aggregated_device_count_active
+- **Primary/Secondary Consumption**: Separate imports where available
+- **Network Hierarchy**: DNO, primary/secondary substations, HV/LV feeders
+- **Geography**: Postcodes, substation locations
+- **Customers**: total_mpan_count for accurate LCL-to-feeder scaling
 
 ## Quality Validation
 
@@ -201,14 +220,15 @@ python -m fyp.ingestion.cli ssen --use-samples
 ### Full Production Run
 ```bash
 # Ensure raw data is present
-ls data/raw/lcl/*.csv
-ls data/raw/ukdale/*.h5
-ls data/raw/ssen/LV_FEEDER_LOOKUP.csv
+ls data/raw/lcl/CC_LCL-FullData.csv
+ls data/raw/ukdale/ukdale.h5
+ls data/raw/ssen/ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_21_2025.csv
+ls data/raw/ssen/ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv
 
 # Run ingestion
-python -m fyp.ingestion.cli lcl
-python -m fyp.ingestion.cli ukdale --downsample-30min
-python -m fyp.ingestion.cli ssen  # Requires network for API
+python -m fyp.ingestion.cli lcl --input-root data/raw --output-root data/processed
+python -m fyp.ingestion.cli ukdale --downsample-30min --input-root data/raw --output-root data/processed
+python -m fyp.ingestion.cli ssen --input-root data/raw --output-root data/processed
 ```
 
 ### DVC Pipeline
@@ -232,9 +252,9 @@ ls data/processed/dataset=*/
 - Symptom: OOM with large HDF5 files
 - Fix: Ingestion samples data (every 60th reading by default)
 
-**API Rate Limiting (SSEN)**
-- Symptom: HTTP 429 errors
-- Fix: Adjust `--rate-limit` parameter (default 1.0 seconds)
+**Missing SSEN CSV Files**
+- Symptom: "No SSEN feeder lookup file found"
+- Fix: Download both CSV files from SSEN open data portal (see download_links.md)
 
 **Missing Dependencies**
 - Symptom: Import errors
@@ -260,10 +280,10 @@ ls data/processed/dataset=*/
    - Batch writes: Process 10k records at a time
    - Schema enforcement: Use PyArrow for type safety and compression
 
-3. **Caching Strategy**:
-   - SSEN API: HTTP response caching with ETag/Last-Modified
-   - Rate limiting: 1-second delays with exponential backoff
-   - Cache invalidation: `--force-refresh` flag for fresh data
+3. **SSEN Optimization**:
+   - Dictionary-based metadata lookup (O(1) instead of O(n) DataFrame scans)
+   - Vectorized pandas validation (filter entire chunks, not row-by-row)
+   - Timestamp conversion per chunk (not per row)
 
 4. **Parallel Processing**: Run dataset ingestions concurrently (different processes)
 
@@ -279,17 +299,14 @@ ls data/processed/dataset=*/
 - **Cause**: Incorrect timezone handling during DST transitions
 - **Fix**: Use `Europe/London` timezone for UK data, handle ambiguous times
 
-**API Rate Limiting**:
-- **Symptom**: HTTP 429 errors from SSEN API
-- **Fix**: Increase rate limit delay: `--rate-limit 2.0`
+**SSEN Data Quality**:
+- **Symptom**: High number of skipped records
+- **Cause**: Missing required fields (feeder_id, timestamp, or consumption)
+- **Fix**: Check source CSV data quality; some skipped records are expected
 
 **Memory Issues (UK-DALE)**:
 - **Symptom**: Out of memory errors with large HDF5 files
 - **Fix**: Increase sampling rate or process houses individually
-
-**Cache Corruption**:
-- **Symptom**: JSON decode errors from cached responses
-- **Fix**: Clear cache directory or use `--force-refresh`
 
 ## Output Verification
 

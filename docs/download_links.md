@@ -57,26 +57,32 @@ data/raw/lcl/
 
 ### Official Source
 - **Provider**: Scottish and Southern Electricity Networks (SSEN)
-- **Access**: Research partnership/collaboration required
-- **Registration**: Formal data sharing agreement needed
-- **License**: Restricted use - validation purposes only
+- **Access**: [SSEN Open Data Portal](https://data.ssen.co.uk)
+- **Registration**: None required (open data)
+- **License**: Open Government License - validation and research use
 
 ### File Details
-- **Primary File**: `LV_FEEDER_LOOKUP.csv` (feeder metadata)
-- **Size**: ~35 MB (feeder characteristics and locations)
-- **Format**: CSV with feeder identifiers, capacity, geographic info
-- **Time Series**: Additional feeder load data (if provided, varies by agreement)
+This dataset provides REAL operational distribution network data:
+
+**1. Metadata Lookup CSV**
+- **File**: `ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_21_2025.csv`
+- **Size**: ~25 MB
+- **Records**: 100,000 LV feeders with network hierarchy
+- **Contains**: Feeder IDs, primary/secondary substations, HV feeder linkages, postcodes, customer counts (total_mpan_count)
+
+**2. Time-Series Consumption CSV**
+- **File**: `ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv`
+- **Size**: ~12 MB
+- **Records**: 100,000 half-hourly consumption readings (October 2025)
+- **Contains**: Actual feeder loads (Wh), device counts, reactive power, timestamps
+- **Coverage**: 28 unique feeders with operational measurements
 
 ### Local Placement
 ```
 data/raw/ssen/
-├── LV_FEEDER_LOOKUP.csv         # Feeder metadata and characteristics
-├── feeder_timeseries/           # Time series data (if available)
-│   ├── feeder_001_2023.csv
-│   ├── feeder_002_2023.csv
-│   └── ...
-└── documentation/               # Technical specifications
-    └── data_dictionary.pdf
+├── ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_21_2025.csv    # Metadata
+├── ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv      # Time-series
+└── LV_FEEDER_LOOKUP.csv                                                 # Legacy (fallback)
 ```
 
 ---
@@ -131,11 +137,12 @@ dvc push
 4. Run `dvc add data/raw/lcl`
 
 ### SSEN Feeder Data
-1. Establish research partnership with SSEN
-2. Sign data sharing agreement
-3. Receive `LV_FEEDER_LOOKUP.csv` and any time series files
-4. Place in `data/raw/ssen/` as shown above
-5. Run `dvc add data/raw/ssen`
+1. Visit [SSEN Open Data Portal](https://data.ssen.co.uk)
+2. Download both CSV files:
+   - `ssen_smart_meter_prod_lv_feeder_lookup_optimized_10_21_2025.csv`
+   - `ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv`
+3. Place in `data/raw/ssen/` as shown above
+4. Run `dvc add data/raw/ssen`
 
 ## Size Expectations
 
@@ -143,14 +150,15 @@ dvc push
 |---------|-------------|------------|---------|
 | UK-DALE | ~6.3 GB | ~2.1 GB | ~114M readings |
 | LCL | ~8.5 GB | ~800 MB | ~167M readings |
-| SSEN | ~35 MB | ~10 MB | ~50K feeders |
+| SSEN (Metadata) | ~25 MB | ~8 MB | ~100K feeders |
+| SSEN (Time-series) | ~12 MB | ~4 MB | ~100K consumption readings |
 | **Total** | **~14.8 GB** | **~2.9 GB** | **~281M records** |
 
 ## Access Notes
 
 - **UK-DALE**: Requires academic registration; allow 1-2 days for approval
 - **LCL**: Immediate download; largest file (consider downloading compressed version first)
-- **SSEN**: Requires formal partnership; contact SSEN research team for data sharing agreement
+- **SSEN**: Open data portal; immediate download of both CSV files (no registration)
 - **All datasets**: Respect usage licenses and cite appropriately in publications
 
 ## Troubleshooting

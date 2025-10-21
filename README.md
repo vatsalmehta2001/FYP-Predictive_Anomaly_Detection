@@ -54,9 +54,10 @@ graph TB
 
 ## USP
 
+- **Real-World Grid Validation**: Actual SSEN distribution network data (100K consumption readings from operational feeders)
 - **Latest Architectures**: PatchTST and N-BEATS variants with uncertainty quantification
 - **Verifiable Rewards**: Physics-based constraints ensure realistic scenario generation
-- **Multi-Scale Validation**: Household-level accuracy with feeder-level realism checks
+- **Multi-Scale Validation**: Household-level accuracy with distribution-feeder-level realism checks
 - **Production MLOps**: DVC data versioning, MLflow experiment tracking, comprehensive CI/CD
 - **Uncertainty Quantification**: Quantile regression heads and Monte Carlo dropout
 - **Open Science**: Reproducible experiments with clear data governance
@@ -99,14 +100,14 @@ graph TB
 
 ### Datasets Overview
 
-| Dataset | Size | Records | Households | Purpose |
+| Dataset | Size | Records | Households/Feeders | Purpose |
 |---------|------|---------|------------|---------|
-| **LCL** (London Smart Meters) | 8.54 GB | ~167M readings | 5,567 | Training & validation |
+| **LCL** (London Smart Meters) | 8.54 GB | ~167M readings | 5,567 households | Training & validation |
 | **UK-DALE** | 6.33 GB | ~114M readings | 5 houses | Appliance-level analysis |
-| **SSEN** (Feeder Metadata) | 36.7 MB | ~50K feeders | N/A | Physical constraints |
-| **Total** | **~15 GB** | **~281M readings** | **5,572+** | — |
+| **SSEN** (LV Feeder Data) | 37 MB | 100K metadata + 100K consumption | 100K feeders (28 with time-series) | **Real-world validation** |
+| **Total** | **~15 GB** | **~281M readings** | **5,572+ entities** | — |
 
-All datasets tracked with DVC. See `data/README_raw.md` for access instructions.
+All datasets tracked with DVC. SSEN provides actual operational grid data for validating pseudo-feeder realism. See `data/README_raw.md` for access instructions.
 
 ## Quick Start
 
