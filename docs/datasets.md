@@ -87,7 +87,7 @@ Scottish and Southern Electricity Networks (SSEN) Low Voltage (LV) feeder data p
 - **Ingestion**: Direct CSV reading with metadata enrichment (fast dictionary lookup)
 - **Processing Speed**: 4 seconds for 100K records (optimized with vectorized validation)
 - **Metadata Enrichment**: Each consumption record enhanced with feeder characteristics
-- **Fields Preserved**: 
+- **Fields Preserved**:
   - Consumption: total_consumption_active_import (Wh), reactive power, device counts
   - Network: DNO name, primary/secondary substations, HV feeder linkage
   - Geography: Postcodes, substation locations

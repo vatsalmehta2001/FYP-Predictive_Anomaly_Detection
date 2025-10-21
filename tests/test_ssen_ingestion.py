@@ -214,7 +214,11 @@ class TestSSENTimeSeriesIngestion:
 
 
 @pytest.mark.skipif(
-    not (Path("data/raw/ssen/ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv").exists()),
+    not (
+        Path(
+            "data/raw/ssen/ssen_smart_meter_prod_lv_feeder_usage_optimized_10_21_2025.csv"
+        ).exists()
+    ),
     reason="Real SSEN time-series CSV not available",
 )
 class TestSSENRealDataIngestion:
@@ -276,13 +280,19 @@ class TestSSENRealDataIngestion:
             df = pl.scan_parquet(str(output_dir / "*.parquet")).collect()
 
             # Parse extras to check customer counts
-            df_with_counts = df.with_columns([
-                pl.col("extras")
-                .map_elements(lambda x: json.loads(x).get("total_mpan_count"), return_dtype=pl.Float64)
-                .alias("mpan_count")
-            ])
+            df_with_counts = df.with_columns(
+                [
+                    pl.col("extras")
+                    .map_elements(
+                        lambda x: json.loads(x).get("total_mpan_count"),
+                        return_dtype=pl.Float64,
+                    )
+                    .alias("mpan_count")
+                ]
+            )
 
             # Most records should have customer counts
-            non_null_count = df_with_counts.filter(pl.col("mpan_count").is_not_null()).height
+            non_null_count = df_with_counts.filter(
+                pl.col("mpan_count").is_not_null()
+            ).height
             assert non_null_count / len(df) > 0.95  # At least 95% should have counts
-

@@ -137,7 +137,9 @@ class SSENIngestor(BaseIngestor):
             for _, row in df.iterrows():
                 feeder_id = str(row["lv_feeder_id"]).strip()
                 self.feeder_metadata_dict[feeder_id] = row.to_dict()
-            self.logger.info(f"Created fast lookup index for {len(self.feeder_metadata_dict):,} feeders")
+            self.logger.info(
+                f"Created fast lookup index for {len(self.feeder_metadata_dict):,} feeders"
+            )
 
         return df
 
