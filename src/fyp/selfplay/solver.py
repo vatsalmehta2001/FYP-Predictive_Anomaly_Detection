@@ -4,18 +4,11 @@ This module implements the forecasting component that learns from both historica
 data and proposed scenarios, using the PatchTST architecture with quantile regression.
 """
 
+import logging
 import os
 from typing import Any
 
 import numpy as np
-from loguru import logger
-
-# Lazy import torch to avoid dependency issues during testing
-try:
-    import torch
-except ImportError:
-    torch = None
-    logger.warning("PyTorch not available. Some solver functionality will be limited.")
 
 from fyp.data_loader import EnergyDataLoader
 from fyp.selfplay.proposer import ScenarioProposal
@@ -23,6 +16,15 @@ from fyp.selfplay.utils import (
     calculate_pinball_loss,
     create_sliding_windows,
 )
+
+logger = logging.getLogger(__name__)
+
+# Lazy import torch to avoid dependency issues during testing
+try:
+    import torch
+except ImportError:
+    torch = None
+    logger.warning("PyTorch not available. Some solver functionality will be limited.")
 
 # Lazy import PatchTST to avoid torch dependency
 try:

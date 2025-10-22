@@ -6,11 +6,13 @@ and SSEN network constraints.
 """
 
 import json
+import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
-from loguru import logger
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from fyp.selfplay.proposer import ScenarioProposal

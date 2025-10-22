@@ -1,9 +1,11 @@
 """Utility functions for self-play training system."""
 
+import logging
 
 import numpy as np
 import pandas as pd
-from loguru import logger
+
+logger = logging.getLogger(__name__)
 
 
 def create_sliding_windows(

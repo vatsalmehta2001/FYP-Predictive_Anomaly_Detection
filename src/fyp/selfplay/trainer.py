@@ -6,13 +6,13 @@ forecasting.
 """
 
 import json
+import logging
 import os
 import time
 from datetime import datetime
 from typing import Any
 
 import numpy as np
-from loguru import logger
 from tqdm import tqdm
 
 from fyp.data_loader import EnergyDataLoader
@@ -21,6 +21,8 @@ from fyp.selfplay.proposer import ProposerAgent
 from fyp.selfplay.solver import SolverAgent
 from fyp.selfplay.utils import create_sliding_windows
 from fyp.selfplay.verifier import VerifierAgent
+
+logger = logging.getLogger(__name__)
 
 
 class SelfPlayTrainer:

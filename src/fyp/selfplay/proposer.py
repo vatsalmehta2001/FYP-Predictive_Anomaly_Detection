@@ -6,17 +6,19 @@ forecasting models.
 """
 
 import json
+import logging
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
 
 import numpy as np
-from loguru import logger
 
 from fyp.selfplay.utils import (
     apply_scenario_transformation,
     estimate_scenario_difficulty,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
