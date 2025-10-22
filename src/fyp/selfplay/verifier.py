@@ -388,6 +388,24 @@ class VerifierAgent:
                 "power_factor": {"min_lagging": 0.95},
             }
 
+        # Handle both test and production JSON structures
+        power_factor_min = ssen_data["power_factor"].get(
+            "min_lagging", ssen_data["power_factor"].get("min", 0.95)
+        )
+
+        # Handle voltage structure (test uses voltage_limits, prod uses voltage)
+        voltage_data = ssen_data.get("voltage_limits", ssen_data.get("voltage", {}))
+        nominal_v = voltage_data.get("nominal_v", 230.0)
+
+        # Handle tolerance format
+        if "min_percent" in voltage_data:
+            tolerance = (
+                voltage_data["min_percent"] / 100,
+                voltage_data["max_percent"] / 100,
+            )
+        else:
+            tolerance = (-0.06, 0.10)  # Default UK G59/3
+
         constraints = {
             "non_negativity": NonNegativityConstraint(),
             "household_max": HouseholdMaxConstraint(
@@ -398,15 +416,10 @@ class VerifierAgent:
             ),
             "ramp_rate": RampRateConstraint(max_ramp_kwh_per_interval=5.0),
             "temporal_pattern": TemporalPatternConstraint(),
-            "power_factor": PowerFactorConstraint(
-                min_power_factor=ssen_data["power_factor"]["min_lagging"]
-            ),
+            "power_factor": PowerFactorConstraint(min_power_factor=power_factor_min),
             "voltage": VoltageConstraint(
-                nominal_voltage=ssen_data["voltage_limits"]["nominal_v"],
-                tolerance=(
-                    ssen_data["voltage_limits"]["min_percent"] / 100,
-                    ssen_data["voltage_limits"]["max_percent"] / 100,
-                ),
+                nominal_voltage=nominal_v,
+                tolerance=tolerance,
             ),
         }
 
