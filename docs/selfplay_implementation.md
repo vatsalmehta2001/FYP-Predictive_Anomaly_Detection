@@ -79,7 +79,7 @@ self.model = PatchTSTForecaster(
 ```python
 weights = {
     "non_negativity": 1.0,      # Hard constraint
-    "household_max": 1.0,        # Hard constraint  
+    "household_max": 1.0,        # Hard constraint
     "ramp_rate": 0.5,            # Soft constraint
     "temporal_pattern": 0.3,     # Soft constraint
     "power_factor": 0.4,         # Soft constraint
@@ -97,13 +97,13 @@ for episode in range(num_episodes):
     for context, target in batch:
         # 1. PROPOSE
         scenario = proposer.propose_scenario(context)
-        
+
         # 2. SOLVE
         forecast = solver.predict(context, scenario)
-        
+
         # 3. VERIFY
         reward = verifier.evaluate(forecast, scenario)
-        
+
         # 4. UPDATE
         solver.train_step(context, target, scenario, reward)
         proposer.update_buffer(scenario, learnability_reward)
