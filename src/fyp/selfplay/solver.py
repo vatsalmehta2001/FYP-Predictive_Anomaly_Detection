@@ -626,10 +626,15 @@ class SolverAgent:
 
         if PatchTSTForecaster is not None and "model_state_dict" in checkpoint:
             self.model = PatchTSTForecaster(**self.model_config, device=self.device)
-            # Load model state
-            self.model.model.load_state_dict(checkpoint["model_state_dict"])
-            self.model.scaler_mean = checkpoint["scaler_mean"]
-            self.model.scaler_std = checkpoint["scaler_std"]
+            # Load model state if model was successfully initialized
+            if self.model.model is not None:
+                self.model.model.load_state_dict(checkpoint["model_state_dict"])
+                self.model.scaler_mean = checkpoint["scaler_mean"]
+                self.model.scaler_std = checkpoint["scaler_std"]
+            else:
+                logger.warning(
+                    "PatchTSTForecaster model not initialized, skipping state dict load"
+                )
         else:
             self.model = None
 
