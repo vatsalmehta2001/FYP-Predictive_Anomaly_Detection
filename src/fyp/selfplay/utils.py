@@ -184,15 +184,17 @@ def apply_scenario_transformation(
         if shift_intervals > 0:
             # Shift forward
             peak_values = transformed[peak_mask]
-            transformed[peak_mask] *= 0.7  # Reduce original peak
-            shift_mask = np.roll(peak_mask, shift_intervals)
-            transformed[shift_mask] += peak_values.mean() * 0.3
+            if len(peak_values) > 0:
+                transformed[peak_mask] *= 0.7  # Reduce original peak
+                shift_mask = np.roll(peak_mask, shift_intervals)
+                transformed[shift_mask] += peak_values.mean() * 0.3
         else:
             # Shift backward
             peak_values = transformed[peak_mask]
-            transformed[peak_mask] *= 0.7
-            shift_mask = np.roll(peak_mask, shift_intervals)
-            transformed[shift_mask] += peak_values.mean() * 0.3
+            if len(peak_values) > 0:
+                transformed[peak_mask] *= 0.7
+                shift_mask = np.roll(peak_mask, shift_intervals)
+                transformed[shift_mask] += peak_values.mean() * 0.3
 
     elif scenario_type == "OUTAGE":
         # Zero consumption during outage

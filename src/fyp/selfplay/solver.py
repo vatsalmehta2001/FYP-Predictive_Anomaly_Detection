@@ -201,7 +201,17 @@ class SolverAgent:
         if self.model is None or self.model.model is None:
             # Model not available or not trained yet, return naive forecast
             logger.warning("Model not available/trained, returning naive forecast")
+
+            # Calculate baseline with validation
             baseline = np.median(context_window)
+            if np.isnan(baseline) or baseline == 0:
+                # Fallback to mean if median is invalid
+                baseline = np.nanmean(context_window)
+                if np.isnan(baseline) or baseline == 0:
+                    # Ultimate fallback to a reasonable default (1 kWh)
+                    baseline = 1.0
+                    logger.warning("Context window invalid, using default baseline")
+
             forecast = np.full(self.forecast_horizon, baseline)
 
             if return_quantiles:
@@ -238,8 +248,14 @@ class SolverAgent:
 
         except Exception as e:
             logger.error(f"Prediction failed: {e}")
-            # Return fallback forecast
+            # Return fallback forecast with validation
             baseline = np.median(context_window)
+            if np.isnan(baseline) or baseline == 0:
+                baseline = np.nanmean(context_window)
+                if np.isnan(baseline) or baseline == 0:
+                    baseline = 1.0
+                    logger.warning("Context invalid in fallback, using default")
+
             forecast = np.full(self.forecast_horizon, baseline)
 
             if return_quantiles:
@@ -601,7 +617,9 @@ class SolverAgent:
         else:
             if torch is None:
                 raise ImportError("PyTorch required to load .pth checkpoint")
-            checkpoint = torch.load(checkpoint_path, map_location=self.device)
+            checkpoint = torch.load(
+                checkpoint_path, map_location=self.device, weights_only=False
+            )
 
         # Recreate model with saved config
         self.model_config = checkpoint["model_config"]
