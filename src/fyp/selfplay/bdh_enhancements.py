@@ -66,6 +66,12 @@ class HebbianVerifier:
         # Store baseline weights for decay
         self.baseline_weights = self.verifier.weights.copy()
 
+        # Track weight evolution over time for analysis
+        self.weight_history: Dict[str, list[float]] = {
+            constraint: [weight]
+            for constraint, weight in self.verifier.weights.items()
+        }
+
         logger.info(
             f"Initialized HebbianVerifier with hebbian_rate={hebbian_rate}, "
             f"decay_rate={decay_rate}"
@@ -100,6 +106,10 @@ class HebbianVerifier:
         # BDH-inspired: Strengthen weights for violated constraints
         if details:
             for constraint_name, result in details.items():
+                # Skip if not a real constraint (e.g., difficulty_bonus, summary fields)
+                if constraint_name not in self.verifier.weights:
+                    continue
+
                 violation_occurred = result["score"] < 0
 
                 # Hebbian rule: strengthen if co-activation (violation + context)
@@ -128,6 +138,11 @@ class HebbianVerifier:
 
                 # Track activation
                 self.activation_history[constraint_name].append(violation_occurred)
+
+                # Track weight evolution
+                self.weight_history[constraint_name].append(
+                    self.verifier.weights[constraint_name]
+                )
 
         return (reward, details) if return_details else reward
 
