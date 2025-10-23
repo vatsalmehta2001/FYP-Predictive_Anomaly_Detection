@@ -61,6 +61,8 @@ psutil = "^5.9.0"
 # Time series specific
 tslearn = "^0.6.0"
 sktime = "^0.24.0"
+transformers = "^4.57.1"
+loguru = "^0.7.3"
 
 [tool.poetry.group.dev.dependencies]
 # Code quality
