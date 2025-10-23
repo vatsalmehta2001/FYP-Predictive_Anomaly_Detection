@@ -10,17 +10,17 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from loguru import logger
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from fyp.selfplay.bdh_enhancements import create_bdh_enhanced_trainer
 from fyp.selfplay.proposer import ProposerAgent
 from fyp.selfplay.solver import SolverAgent
 from fyp.selfplay.verifier import VerifierAgent
-from fyp.selfplay.bdh_enhancements import create_bdh_enhanced_trainer
 
 
 class StressTestSolver(SolverAgent):
@@ -49,11 +49,15 @@ class StressTestSolver(SolverAgent):
             return {"0.1": forecast * 0.9, "0.5": forecast, "0.9": forecast * 1.1}
         return forecast
 
-    def train_step(self, context, target, scenario=None, verification_reward=0, alpha=0.1):
+    def train_step(
+        self, context, target, scenario=None, verification_reward=0, alpha=0.1
+    ):
         """Learn target for context."""
         context_hash = hash(context.tobytes())
         # Learn to predict the target
-        self.stress_targets[context_hash] = target * 0.9 + np.random.randn(len(target)) * 0.05
+        self.stress_targets[context_hash] = (
+            target * 0.9 + np.random.randn(len(target)) * 0.05
+        )
         return 1.0
 
     def update_historical_buffer(self, windows):
@@ -86,7 +90,7 @@ class MovingAverageForecaster:
 
     def predict(self, context, forecast_horizon=16):
         """Return moving average."""
-        recent = context[-self.window:]
+        recent = context[-self.window :]
         avg = np.mean(recent)
         return np.ones(forecast_horizon) * avg
 
@@ -140,9 +144,7 @@ def train_selfplay(train_data, num_episodes=20):
 
     solver = StressTestSolver()
 
-    verifier = VerifierAgent(
-        ssen_constraints_path="data/derived/ssen_constraints.json"
-    )
+    verifier = VerifierAgent(ssen_constraints_path="data/derived/ssen_constraints.json")
 
     trainer = create_bdh_enhanced_trainer(
         proposer,
@@ -183,9 +185,7 @@ def evaluate_forecasters(forecasters, test_data):
             # Get forecast
             if hasattr(forecaster, "predict"):
                 if isinstance(forecaster, StressTestSolver):
-                    forecast_dict = forecaster.predict(
-                        context, return_quantiles=True
-                    )
+                    forecast_dict = forecaster.predict(context, return_quantiles=True)
                     forecast = forecast_dict.get("0.5", target)  # Use median
                 else:
                     forecast = forecaster.predict(context, len(target))
@@ -219,7 +219,7 @@ def plot_results(results):
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
     methods = list(results.keys())
-    colors = ["gray", "orange", "blue", "green"][:len(methods)]
+    colors = ["gray", "orange", "blue", "green"][: len(methods)]
 
     # Panel 1: MAE comparison with error bars
     ax1 = axes[0, 0]
@@ -232,7 +232,7 @@ def plot_results(results):
     ax1.grid(True, alpha=0.3, axis="y")
 
     # Add value labels
-    for bar, mae in zip(bars, maes):
+    for bar, mae in zip(bars, maes, strict=False):
         height = bar.get_height()
         ax1.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -254,7 +254,7 @@ def plot_results(results):
     ax2.grid(True, alpha=0.3, axis="y")
 
     # Add value labels
-    for bar, mape in zip(bars2, mapes):
+    for bar, mape in zip(bars2, mapes, strict=False):
         height = bar.get_height()
         ax2.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -279,7 +279,7 @@ def plot_results(results):
     ax3.grid(True, alpha=0.3, axis="x")
 
     # Add value labels
-    for bar, imp in zip(bars3, improvements):
+    for bar, imp in zip(bars3, improvements, strict=False):
         width_val = bar.get_width()
         ax3.text(
             width_val,
@@ -292,7 +292,7 @@ def plot_results(results):
 
     # Panel 4: MAE distribution histogram
     ax4 = axes[1, 1]
-    for method, color in zip(methods, colors):
+    for method, color in zip(methods, colors, strict=False):
         ax4.hist(
             [results[method]["mae_mean"]],
             bins=10,
@@ -399,9 +399,7 @@ def main():
             f"✅ SUCCESS: Self-Play improves by {improvement:.1f}% (target: >10%)"
         )
     else:
-        logger.warning(
-            f"⚠️  Improvement {improvement:.1f}% below target (>10%)"
-        )
+        logger.warning(f"⚠️  Improvement {improvement:.1f}% below target (>10%)")
 
     logger.info("\n" + "=" * 70)
     logger.success("BASELINE COMPARISON COMPLETE")
@@ -410,4 +408,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -15,17 +15,17 @@ References:
 import sys
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from loguru import logger
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from fyp.selfplay.bdh_enhancements import create_bdh_enhanced_trainer
 from fyp.selfplay.proposer import ProposerAgent
 from fyp.selfplay.solver import SolverAgent
 from fyp.selfplay.verifier import VerifierAgent
-from fyp.selfplay.bdh_enhancements import create_bdh_enhanced_trainer
 
 
 def main() -> None:
@@ -56,9 +56,7 @@ def main() -> None:
         device="cpu",
     )
 
-    verifier = VerifierAgent(
-        ssen_constraints_path="data/derived/ssen_constraints.json"
-    )
+    verifier = VerifierAgent(ssen_constraints_path="data/derived/ssen_constraints.json")
 
     # 2. Create BDH-enhanced trainer
     logger.info("\nCreating BDH-enhanced trainer...")
@@ -77,9 +75,7 @@ def main() -> None:
     # 3. Create synthetic training batch
     logger.info("\nCreating synthetic batch...")
     np.random.seed(42)
-    train_data = [
-        (np.random.rand(336) * 2, np.random.rand(16) * 2) for _ in range(20)
-    ]
+    train_data = [(np.random.rand(336) * 2, np.random.rand(16) * 2) for _ in range(20)]
 
     # 4. Run training for 20 episodes
     logger.info("\nTraining for 20 episodes with BDH enhancements...\n")
@@ -142,7 +138,9 @@ def main() -> None:
 
         scenario_counts = Counter(all_scenarios)
         for scenario, count in scenario_counts.most_common():
-            logger.info(f"      {scenario:15s}: {count:3d} ({count/len(all_scenarios):.1%})")
+            logger.info(
+                f"      {scenario:15s}: {count:3d} ({count/len(all_scenarios):.1%})"
+            )
 
     # 6. Standard metrics
     logger.info("\n3. STANDARD TRAINING METRICS")
@@ -232,7 +230,9 @@ def plot_bdh_metrics(metrics_history: list, trainer: any) -> None:
         constraints = list(weight_stats.keys())
         weights = [weight_stats[c]["weight"] for c in constraints]
         baselines = [weight_stats[c]["baseline_weight"] for c in constraints]
-        violation_rates = [weight_stats[c]["activation_rate"] * 100 for c in constraints]
+        violation_rates = [
+            weight_stats[c]["activation_rate"] * 100 for c in constraints
+        ]
 
         x = np.arange(len(constraints))
         width = 0.35
@@ -240,7 +240,9 @@ def plot_bdh_metrics(metrics_history: list, trainer: any) -> None:
         bars1 = ax4.bar(
             x - width / 2, baselines, width, label="Baseline Weight", alpha=0.7
         )
-        bars2 = ax4.bar(x + width / 2, weights, width, label="Current Weight", alpha=0.7)
+        bars2 = ax4.bar(
+            x + width / 2, weights, width, label="Current Weight", alpha=0.7
+        )
 
         ax4.set_xlabel("Constraint")
         ax4.set_ylabel("Weight")
@@ -287,7 +289,7 @@ def plot_bdh_metrics(metrics_history: list, trainer: any) -> None:
 
     # Add percentage labels
     total = sum(counts)
-    for bar, count in zip(bars, counts):
+    for bar, count in zip(bars, counts, strict=False):
         height = bar.get_height()
         ax5.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -331,4 +333,3 @@ def plot_bdh_metrics(metrics_history: list, trainer: any) -> None:
 
 if __name__ == "__main__":
     main()
-

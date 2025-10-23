@@ -33,7 +33,10 @@ def verify() -> bool:
         import torch
         import transformers
 
-        print(f"✅ Check 1/5: PyTorch {torch.__version__} installed")
+        print(
+            f"✅ Check 1/5: PyTorch {torch.__version__} installed "
+            f"(Transformers {transformers.__version__})"
+        )
         checks_passed += 1
     except ImportError:
         print("⚠️  Check 1/5: PyTorch missing (experiments ran in fallback mode)")
@@ -141,4 +144,3 @@ def verify() -> bool:
 if __name__ == "__main__":
     success = verify()
     sys.exit(0 if success else 1)
-

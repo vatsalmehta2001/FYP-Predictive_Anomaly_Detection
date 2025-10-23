@@ -16,7 +16,7 @@ References:
 """
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -59,7 +59,7 @@ class HebbianVerifier:
         self.decay_rate = decay_rate
 
         # Track constraint activation history (like σ matrix in BDH)
-        self.activation_history: Dict[str, list[bool]] = {
+        self.activation_history: dict[str, list[bool]] = {
             constraint: [] for constraint in self.verifier.constraints.keys()
         }
 
@@ -67,9 +67,8 @@ class HebbianVerifier:
         self.baseline_weights = self.verifier.weights.copy()
 
         # Track weight evolution over time for analysis
-        self.weight_history: Dict[str, list[float]] = {
-            constraint: [weight]
-            for constraint, weight in self.verifier.weights.items()
+        self.weight_history: dict[str, list[float]] = {
+            constraint: [weight] for constraint, weight in self.verifier.weights.items()
         }
 
         logger.info(
@@ -80,9 +79,9 @@ class HebbianVerifier:
     def evaluate(
         self,
         forecast: np.ndarray,
-        scenario: Optional[ScenarioProposal] = None,
+        scenario: ScenarioProposal | None = None,
         return_details: bool = False,
-    ) -> Tuple[float, Dict[str, Any]] | float:
+    ) -> tuple[float, dict[str, Any]] | float:
         """
         Evaluate with Hebbian weight adaptation.
 
@@ -146,7 +145,7 @@ class HebbianVerifier:
 
         return (reward, details) if return_details else reward
 
-    def get_weight_statistics(self) -> Dict[str, Dict[str, float]]:
+    def get_weight_statistics(self) -> dict[str, dict[str, float]]:
         """
         Get current constraint weights and activation frequencies.
 
@@ -212,8 +211,8 @@ class SparseActivationMonitor:
         return float(np.mean(inactive))
 
     def monitor_prediction(
-        self, context: np.ndarray, scenario: Optional[ScenarioProposal] = None
-    ) -> Dict[str, np.ndarray]:
+        self, context: np.ndarray, scenario: ScenarioProposal | None = None
+    ) -> dict[str, np.ndarray]:
         """
         Wrap solver prediction to monitor sparsity.
 
@@ -241,7 +240,7 @@ class SparseActivationMonitor:
 
         return forecast
 
-    def get_statistics(self) -> Dict[str, float]:
+    def get_statistics(self) -> dict[str, float]:
         """Get sparsity statistics."""
         if not self.sparsity_history:
             return {
@@ -290,7 +289,7 @@ class GraphBasedProposer:
 
         # Scenario relationship graph (adjacency matrix)
         # Values represent transition probabilities when following graph
-        self.scenario_graph: Dict[str, Dict[str, Any]] = {
+        self.scenario_graph: dict[str, dict[str, Any]] = {
             "EV_SPIKE": {
                 "leads_to": {"PEAK_SHIFT": 0.4, "COLD_SNAP": 0.1},
                 "conflicts_with": {"OUTAGE": 0.9},
@@ -353,9 +352,7 @@ class GraphBasedProposer:
 
                     # Normalize probabilities
                     probs_normalized = np.array(probs) / sum(probs)
-                    scenario_type = np.random.choice(
-                        next_scenarios, p=probs_normalized
-                    )
+                    scenario_type = np.random.choice(next_scenarios, p=probs_normalized)
 
                     logger.debug(f"Graph sampling: {last_scenario} → {scenario_type}")
 
@@ -380,7 +377,7 @@ class GraphBasedProposer:
             **kwargs,
         )
 
-    def get_graph_statistics(self) -> Dict[str, Any]:
+    def get_graph_statistics(self) -> dict[str, Any]:
         """Get graph structure statistics."""
         # Count edges and nodes
         num_nodes = len(self.scenario_graph)
@@ -410,7 +407,7 @@ def create_bdh_enhanced_trainer(
     base_proposer: ProposerAgent,
     base_solver: SolverAgent,
     base_verifier: VerifierAgent,
-    config: Dict[str, Any],
+    config: dict[str, Any],
     enable_hebbian: bool = True,
     enable_graph: bool = True,
     enable_sparsity: bool = False,
@@ -476,4 +473,3 @@ def create_bdh_enhanced_trainer(
 
     logger.info("Created BDH-enhanced self-play trainer")
     return trainer
-

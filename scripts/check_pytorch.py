@@ -4,10 +4,9 @@ Check if PyTorch and required dependencies are available.
 This script verifies the environment is ready for full self-play training.
 """
 import sys
-from typing import Dict, Tuple
 
 
-def check_dependency(name: str, import_path: str) -> Tuple[bool, str]:
+def check_dependency(name: str, import_path: str) -> tuple[bool, str]:
     """
     Check if a dependency is available.
 
@@ -48,7 +47,7 @@ def main() -> bool:
         "loguru": "loguru",
     }
 
-    results: Dict[str, Tuple[bool, str]] = {}
+    results: dict[str, tuple[bool, str]] = {}
     all_available = True
 
     for name, import_path in dependencies.items():
@@ -77,4 +76,3 @@ def main() -> bool:
 if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)
-

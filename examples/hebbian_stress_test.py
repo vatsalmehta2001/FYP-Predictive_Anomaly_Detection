@@ -11,18 +11,18 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from loguru import logger
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from fyp.selfplay.bdh_enhancements import HebbianVerifier
 from fyp.selfplay.proposer import ProposerAgent
 from fyp.selfplay.solver import SolverAgent
-from fyp.selfplay.verifier import VerifierAgent
 from fyp.selfplay.trainer import SelfPlayTrainer
-from fyp.selfplay.bdh_enhancements import HebbianVerifier
+from fyp.selfplay.verifier import VerifierAgent
 
 
 class StressTestSolver(SolverAgent):
@@ -63,7 +63,9 @@ class StressTestSolver(SolverAgent):
             }
         return forecast
 
-    def train_step(self, context, target, scenario=None, verification_reward=0, alpha=0.1):
+    def train_step(
+        self, context, target, scenario=None, verification_reward=0, alpha=0.1
+    ):
         """Cache target for this context (simulate 'learning')."""
         context_hash = hash(context.tobytes())
         self.stress_targets[context_hash] = target
@@ -90,7 +92,9 @@ def create_stress_scenarios(num_scenarios: int = 30) -> list:
     # Scenario type 1: Household max violations (high consumption)
     for _ in range(6):
         context = np.random.rand(336) * 2.0  # Normal context
-        target = np.random.rand(16) * 12.0 + 8.0  # Force 8-20 kWh (violates 7.5 typical)
+        target = (
+            np.random.rand(16) * 12.0 + 8.0
+        )  # Force 8-20 kWh (violates 7.5 typical)
         scenarios.append((context, target))
 
     # Scenario type 2: Ramp rate violations (sudden spikes)
@@ -99,8 +103,8 @@ def create_stress_scenarios(num_scenarios: int = 30) -> list:
         target = np.ones(16) * 2.0
         # Sudden spike in middle
         spike_start = np.random.randint(4, 10)
-        target[spike_start:spike_start + 2] = 10.0
-        target[spike_start + 2:spike_start + 4] = 2.0  # Sudden drop
+        target[spike_start : spike_start + 2] = 10.0
+        target[spike_start + 2 : spike_start + 4] = 2.0  # Sudden drop
         scenarios.append((context, target))
 
     # Scenario type 3: Temporal pattern violations (abnormal day/night)
@@ -142,7 +146,9 @@ def train_with_hebbian(
 
     # Wrap verifier with Hebbian adaptation
     hebbian_verifier = HebbianVerifier(
-        verifier, hebbian_rate=0.02, decay_rate=0.005  # Higher rate for stress test
+        verifier,
+        hebbian_rate=0.02,
+        decay_rate=0.005,  # Higher rate for stress test
     )
 
     # Create custom trainer that uses Hebbian verifier
@@ -314,9 +320,7 @@ def plot_results(
 
     # Panel 3: Violation rates
     ax3 = fig.add_subplot(gs[0, 2])
-    violation_rates = [
-        results["violation_rates"][c] * 100 for c in constraints
-    ]
+    violation_rates = [results["violation_rates"][c] * 100 for c in constraints]
     colors = plt.cm.RdYlGn_r(np.array(violation_rates) / 100)
     bars = ax3.bar(constraints, violation_rates, color=colors, alpha=0.7)
     ax3.set_xlabel("Constraint")
@@ -326,7 +330,7 @@ def plot_results(
     ax3.grid(True, alpha=0.3, axis="y")
 
     # Add percentage labels
-    for bar, rate in zip(bars, violation_rates):
+    for bar, rate in zip(bars, violation_rates, strict=False):
         height = bar.get_height()
         ax3.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -342,7 +346,15 @@ def plot_results(
     hebbian_rewards = [m["avg_verification_reward"] for m in hebbian_metrics]
     baseline_rewards = [m["avg_verification_reward"] for m in baseline_metrics]
     ax4.plot(episodes, hebbian_rewards, "b-o", label="Hebbian", linewidth=2)
-    ax4.plot(episodes, baseline_rewards, color="gray", linestyle="--", marker="s", label="Baseline", linewidth=2)
+    ax4.plot(
+        episodes,
+        baseline_rewards,
+        color="gray",
+        linestyle="--",
+        marker="s",
+        label="Baseline",
+        linewidth=2,
+    )
     ax4.set_xlabel("Episode")
     ax4.set_ylabel("Verification Reward")
     ax4.set_title("Verification Rewards: Hebbian vs Baseline", fontweight="bold")
@@ -354,7 +366,15 @@ def plot_results(
     hebbian_loss = [m["avg_solver_loss"] for m in hebbian_metrics]
     baseline_loss = [m["avg_solver_loss"] for m in baseline_metrics]
     ax5.plot(episodes, hebbian_loss, "b-o", label="Hebbian", linewidth=2)
-    ax5.plot(episodes, baseline_loss, color="gray", linestyle="--", marker="s", label="Baseline", linewidth=2)
+    ax5.plot(
+        episodes,
+        baseline_loss,
+        color="gray",
+        linestyle="--",
+        marker="s",
+        label="Baseline",
+        linewidth=2,
+    )
     ax5.set_xlabel("Episode")
     ax5.set_ylabel("Solver Loss")
     ax5.set_title("Solver Loss: Hebbian vs Baseline", fontweight="bold")
@@ -363,9 +383,7 @@ def plot_results(
 
     # Panel 6: Weight changes summary
     ax6 = fig.add_subplot(gs[1, 2])
-    pct_changes = [
-        results["weight_changes"][c]["percent_change"] for c in constraints
-    ]
+    pct_changes = [results["weight_changes"][c]["percent_change"] for c in constraints]
     colors_bar = ["green" if pc > 0 else "blue" for pc in pct_changes]
     bars = ax6.barh(constraints, pct_changes, color=colors_bar, alpha=0.7)
     ax6.set_xlabel("Weight Change (%)")
@@ -375,7 +393,7 @@ def plot_results(
     ax6.grid(True, alpha=0.3, axis="x")
 
     # Add percentage labels
-    for bar, pc in zip(bars, pct_changes):
+    for bar, pc in zip(bars, pct_changes, strict=False):
         width_val = bar.get_width()
         ax6.text(
             width_val,
@@ -425,9 +443,7 @@ def main() -> None:
     solver = StressTestSolver()
     logger.info("Using StressTestSolver for constraint violation testing")
 
-    verifier = VerifierAgent(
-        ssen_constraints_path="data/derived/ssen_constraints.json"
-    )
+    verifier = VerifierAgent(ssen_constraints_path="data/derived/ssen_constraints.json")
 
     # 3. Train with Hebbian adaptation
     logger.info("\nStep 3: Training with Hebbian adaptation (30 episodes)...")
@@ -437,7 +453,9 @@ def main() -> None:
 
     # 4. Train baseline
     logger.info("\nStep 4: Training baseline without Hebbian (30 episodes)...")
-    baseline_metrics = train_baseline(proposer, solver, verifier, stress_data, num_episodes=30)
+    baseline_metrics = train_baseline(
+        proposer, solver, verifier, stress_data, num_episodes=30
+    )
 
     # 5. Analyze results
     logger.info("\nStep 5: Analyzing Hebbian adaptation results...")
@@ -470,9 +488,7 @@ def main() -> None:
             f"✅ SUCCESS: Weight changed by {max_change:+.1f}% (target: >5%)"
         )
     else:
-        logger.warning(
-            f"⚠️  Weight change {max_change:+.1f}% below target (5%)"
-        )
+        logger.warning(f"⚠️  Weight change {max_change:+.1f}% below target (5%)")
 
     logger.info("\n" + "=" * 70)
     logger.success("HEBBIAN STRESS TEST COMPLETE")
@@ -481,4 +497,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

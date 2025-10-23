@@ -13,18 +13,18 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from loguru import logger
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from fyp.selfplay.bdh_enhancements import create_bdh_enhanced_trainer
 from fyp.selfplay.proposer import ProposerAgent
 from fyp.selfplay.solver import SolverAgent
-from fyp.selfplay.verifier import VerifierAgent
 from fyp.selfplay.trainer import SelfPlayTrainer
-from fyp.selfplay.bdh_enhancements import create_bdh_enhanced_trainer
+from fyp.selfplay.verifier import VerifierAgent
 
 
 class AblationSolver(SolverAgent):
@@ -48,7 +48,9 @@ class AblationSolver(SolverAgent):
             return {"0.1": forecast * 0.95, "0.5": forecast, "0.9": forecast * 1.05}
         return forecast
 
-    def train_step(self, context, target, scenario=None, verification_reward=0, alpha=0.1):
+    def train_step(
+        self, context, target, scenario=None, verification_reward=0, alpha=0.1
+    ):
         """Simple learning."""
         forecast = self.predict(context, return_quantiles=False)
         return np.mean((target - forecast) ** 2)
@@ -68,7 +70,9 @@ def create_dataset(num_train=100, num_test=20, seed=42):
         context = pattern
 
         t_target = np.arange(336, 352)
-        target = 2.5 + 0.8 * np.sin(2 * np.pi * t_target / 48) + np.random.randn(16) * 0.15
+        target = (
+            2.5 + 0.8 * np.sin(2 * np.pi * t_target / 48) + np.random.randn(16) * 0.15
+        )
 
         return (context, target)
 
@@ -91,9 +95,7 @@ def train_configuration(config_name, train_data, enable_hebbian, enable_graph):
 
     solver = AblationSolver()
 
-    verifier = VerifierAgent(
-        ssen_constraints_path="data/derived/ssen_constraints.json"
-    )
+    verifier = VerifierAgent(ssen_constraints_path="data/derived/ssen_constraints.json")
 
     if enable_hebbian or enable_graph:
         trainer = create_bdh_enhanced_trainer(
@@ -188,7 +190,7 @@ def plot_results(configs, results, analysis):
     ax1.grid(True, alpha=0.3, axis="y")
 
     # Add labels
-    for bar, mae in zip(bars, maes):
+    for bar, mae in zip(bars, maes, strict=False):
         height = bar.get_height()
         ax1.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -213,7 +215,7 @@ def plot_results(configs, results, analysis):
     ax2.grid(True, alpha=0.3, axis="x")
 
     # Add labels
-    for bar, imp in zip(bars2, improvements):
+    for bar, imp in zip(bars2, improvements, strict=False):
         width_val = bar.get_width()
         ax2.text(
             width_val,
@@ -241,7 +243,7 @@ def plot_results(configs, results, analysis):
     ax3.grid(True, alpha=0.3, axis="y")
 
     # Add labels
-    for bar, cont in zip(bars3, contributions):
+    for bar, cont in zip(bars3, contributions, strict=False):
         height = bar.get_height()
         ax3.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -282,7 +284,7 @@ def plot_results(configs, results, analysis):
     ax5.grid(True, alpha=0.3, axis="y")
 
     # Add labels and synergy type
-    for bar, val in zip(bars5, synergy_data):
+    for bar, val in zip(bars5, synergy_data, strict=False):
         height = bar.get_height()
         ax5.text(
             bar.get_x() + bar.get_width() / 2.0,
@@ -449,4 +451,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

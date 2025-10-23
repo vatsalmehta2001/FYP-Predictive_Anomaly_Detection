@@ -156,6 +156,13 @@ exclude = [
 [tool.ruff.mccabe]
 max-complexity = 18
 
+[tool.ruff.per-file-ignores]
+# Allow more flexible code style in examples and scripts
+"examples/*.py" = ["E402", "F841", "ARG001", "B007"]
+"scripts/*.py" = ["E402", "F841", "ARG001"]
+# __init__.py intentionally imports for public API
+"src/fyp/selfplay/__init__.py" = ["F401"]
+
 [tool.ruff.isort]
 known-first-party = ["fyp"]
 
