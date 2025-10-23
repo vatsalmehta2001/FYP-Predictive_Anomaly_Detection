@@ -214,8 +214,12 @@ class SolverAgent:
 
             forecast = np.full(self.forecast_horizon, baseline)
 
+            # Apply scenario transformation to the baseline if provided
+            if scenario is not None:
+                forecast = scenario.apply_to_timeseries(forecast.copy())
+
             if return_quantiles:
-                return {"0.1": forecast * 0.8, "0.5": forecast, "0.9": forecast * 1.2}
+                return {"0.1": forecast * 0.9, "0.5": forecast, "0.9": forecast * 1.1}
             else:
                 return {"point": forecast}
 
@@ -258,8 +262,12 @@ class SolverAgent:
 
             forecast = np.full(self.forecast_horizon, baseline)
 
+            # Apply scenario transformation to the baseline if provided
+            if scenario is not None:
+                forecast = scenario.apply_to_timeseries(forecast.copy())
+
             if return_quantiles:
-                return {"0.1": forecast * 0.8, "0.5": forecast, "0.9": forecast * 1.2}
+                return {"0.1": forecast * 0.9, "0.5": forecast, "0.9": forecast * 1.1}
             else:
                 return {"point": forecast}
 

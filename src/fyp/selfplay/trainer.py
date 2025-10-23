@@ -25,6 +25,31 @@ from fyp.selfplay.verifier import VerifierAgent
 logger = logging.getLogger(__name__)
 
 
+def _safe_mean(values: list[float] | np.ndarray, default: float = 0.0) -> float:
+    """Compute mean safely, handling empty lists and NaN values.
+
+    Args:
+        values: List or array of values
+        default: Default value if list is empty or all NaN
+
+    Returns:
+        Mean value or default
+    """
+    if not values or len(values) == 0:
+        return float(default)
+
+    # Convert to numpy array for easier filtering
+    vals = np.array(values, dtype=float)
+
+    # Filter out NaN and infinite values
+    valid_vals = vals[np.isfinite(vals)]
+
+    if len(valid_vals) == 0:
+        return float(default)
+
+    return float(np.mean(valid_vals))
+
+
 class SelfPlayTrainer:
     """Orchestrates propose→solve→verify self-play training loop."""
 
@@ -186,16 +211,25 @@ class SelfPlayTrainer:
 
         # Episode summary statistics
         metrics["episode_time"] = time.time() - episode_start_time
-        metrics["avg_solver_loss"] = np.mean(metrics["solver_losses"])
-        metrics["avg_verification_reward"] = np.mean(metrics["verification_rewards"])
-        metrics["avg_proposer_reward"] = np.mean(metrics["proposer_rewards"])
-        metrics["scenario_diversity"] = len(set(metrics["scenarios"])) / len(
-            metrics["scenarios"]
+        metrics["avg_solver_loss"] = _safe_mean(metrics["solver_losses"], default=0.0)
+        metrics["avg_verification_reward"] = _safe_mean(
+            metrics["verification_rewards"], default=0.0
+        )
+        metrics["avg_proposer_reward"] = _safe_mean(
+            metrics["proposer_rewards"], default=0.0
         )
 
+        # Handle scenario diversity safely
+        if metrics["scenarios"]:
+            metrics["scenario_diversity"] = len(set(metrics["scenarios"])) / len(
+                metrics["scenarios"]
+            )
+        else:
+            metrics["scenario_diversity"] = 0.0
+
         for error_type in ["mae", "mape", "smape"]:
-            metrics[f"avg_{error_type}"] = np.mean(
-                metrics["forecast_errors"][error_type]
+            metrics[f"avg_{error_type}"] = _safe_mean(
+                metrics["forecast_errors"][error_type], default=0.0
             )
 
         self.episode_count += 1
@@ -351,13 +385,13 @@ class SelfPlayTrainer:
             all_violations.append(has_violation)
 
         return {
-            "avg_loss": np.mean(all_losses),
-            "mae": np.mean(all_mae),
-            "mape": np.mean(all_mape),
-            "smape": np.mean(all_smape),
-            "violation_rate": np.mean(all_violations),
-            "mae_std": np.std(all_mae),
-            "mape_std": np.std(all_mape),
+            "avg_loss": _safe_mean(all_losses, default=0.0),
+            "mae": _safe_mean(all_mae, default=0.0),
+            "mape": _safe_mean(all_mape, default=0.0),
+            "smape": _safe_mean(all_smape, default=0.0),
+            "violation_rate": _safe_mean(all_violations, default=0.0),
+            "mae_std": np.std(all_mae) if all_mae else 0.0,
+            "mape_std": np.std(all_mape) if all_mape else 0.0,
         }
 
     def _prepare_data_windows(
@@ -457,9 +491,13 @@ class SelfPlayTrainer:
         window = 10
         recent_metrics = self.metrics_history[-window:]
 
-        avg_loss = np.mean([m["avg_solver_loss"] for m in recent_metrics])
-        avg_reward = np.mean([m["avg_verification_reward"] for m in recent_metrics])
-        avg_mae = np.mean([m["avg_mae"] for m in recent_metrics])
+        avg_loss = _safe_mean(
+            [m["avg_solver_loss"] for m in recent_metrics], default=0.0
+        )
+        avg_reward = _safe_mean(
+            [m["avg_verification_reward"] for m in recent_metrics], default=0.0
+        )
+        avg_mae = _safe_mean([m["avg_mae"] for m in recent_metrics], default=0.0)
 
         # Scenario distribution
         scenario_counts = {}
@@ -526,23 +564,29 @@ class SelfPlayTrainer:
         for scenario_type, success_rates in self.scenario_success_rates.items():
             scenario_performance[scenario_type] = {
                 "total_count": len(success_rates),
-                "avg_success_rate": np.mean(success_rates),
-                "std_success_rate": np.std(success_rates),
+                "avg_success_rate": _safe_mean(success_rates, default=0.0),
+                "std_success_rate": np.std(success_rates) if success_rates else 0.0,
             }
 
         summary = {
             "total_episodes": self.episode_count,
             "best_val_loss": self.best_val_loss,
             "final_metrics": {
-                "avg_loss": np.mean(all_losses[-100:]),
-                "avg_reward": np.mean(all_rewards[-100:]),
-                "avg_mae": np.mean(all_mae[-100:]),
+                "avg_loss": _safe_mean(all_losses[-100:], default=0.0),
+                "avg_reward": _safe_mean(all_rewards[-100:], default=0.0),
+                "avg_mae": _safe_mean(all_mae[-100:], default=0.0),
             },
             "improvement": {
-                "loss_reduction": (all_losses[0] - all_losses[-1])
-                / all_losses[0]
-                * 100,
-                "mae_reduction": (all_mae[0] - all_mae[-1]) / all_mae[0] * 100,
+                "loss_reduction": (
+                    ((all_losses[0] - all_losses[-1]) / all_losses[0] * 100)
+                    if all_losses and all_losses[0] != 0
+                    else 0.0
+                ),
+                "mae_reduction": (
+                    ((all_mae[0] - all_mae[-1]) / all_mae[0] * 100)
+                    if all_mae and all_mae[0] != 0
+                    else 0.0
+                ),
             },
             "scenario_performance": scenario_performance,
             "proposer_final_state": self.proposer.get_scenario_statistics(),
